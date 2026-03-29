@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from skimage.registration import phase_cross_correlation
 import constants
-from utils import load_fits, prepare_images, print_localisation_accuracy
+from utils import load_fits, prepare_images, print_localisation_accuracy, save_phase_correlation_map
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", "pair_0001")
 
@@ -18,6 +18,9 @@ def main(haystack_path, needle_path):
     shift, *_ = phase_cross_correlation(w_haystack, w_canvas, upsample_factor=upsample)
 
     print_localisation_accuracy(shift[1], shift[0], header_needle, header_haystack)
+
+    if constants.SAVE_CORRELATION_MAP:
+        save_phase_correlation_map(w_haystack, w_canvas, haystack_path)
 
 
 if __name__ == "__main__":

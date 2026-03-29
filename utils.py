@@ -1,7 +1,33 @@
+import os
 import numpy as np
 from scipy.signal import windows, wiener
 from astropy.io import fits
 from astropy.wcs import WCS
+import matplotlib.pyplot as plt
+
+
+def save_phase_correlation_map(img1, img2, haystack_path, output_path=None):
+    """Compute and save the normalised cross-power spectrum (phase correlation map).
+
+    Normalising the cross-power spectrum to unit magnitude before the IFFT
+    means every frequency contributes equally regardless of its energy,
+    producing a sharp impulse at the true shift rather than a broad peak.
+    """
+
+    F1 = np.fft.fft2(img1)
+    F2 = np.fft.fft2(img2)
+    cross = F1 * np.conj(F2)
+    denom = np.abs(cross)
+    denom[denom == 0] = 1e-10
+    corr_map = np.fft.fftshift(np.fft.ifft2(cross / denom).real)
+
+    if output_path is None:
+        output_path = os.path.join(
+            os.path.dirname(haystack_path),
+            os.path.splitext(os.path.basename(haystack_path).replace("haystack", "correlation_map"))[0] + ".png"
+        )
+    plt.imsave(output_path, corr_map, cmap='magma', vmin=corr_map.min(), vmax=corr_map.max())
+    print(f"Saved correlation map to {output_path}")
 
 
 def prepare_images(haystack, needle):
@@ -14,8 +40,8 @@ def prepare_images(haystack, needle):
     canvas = pad_to_size(needle, H, W)
 
     window     = np.outer(windows.hann(H), windows.hann(W))
-    w_haystack = haystack * window
-    w_canvas   = canvas   * window
+    w_haystack = np.copy(haystack)
+    w_canvas   = np.copy(canvas)
     return w_haystack, w_canvas
 
 
@@ -90,8 +116,11 @@ def print_localisation_accuracy(shift_x, shift_y, header_needle, header_haystack
         row("  dx",                          px=abs(wcs_err_x))
         row("  dy",                          px=abs(wcs_err_y))
 
+    det_ra, det_dec = wcs_h.pixel_to_world_values(det_cx, det_cy)
+
     print(f"  {'':-<62}")
     row("Detected centre (cx, cy)",      cx=det_cx,   cy=det_cy)
+    row("Detected centre (RA, Dec)",     scalar=f"{det_ra:.6f} deg,  {det_dec:.6f} deg")
     row("Detection error",               px=dist_true)
     row("  dx",                          px=abs(dx_true))
     row("  dy",                          px=abs(dy_true))

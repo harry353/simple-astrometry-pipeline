@@ -69,6 +69,11 @@ def main(haystack_path, needle_path, output_path=None):
     hdu.writeto(output_path, overwrite=True)
     print(f"Saved candidate needle to {output_path}")
 
+    import matplotlib.pyplot as plt
+    png_path = os.path.splitext(output_path)[0] + ".png"
+    plt.imsave(png_path, cutout, cmap='viridis')
+    print(f"Saved candidate needle image to {png_path}")
+
 
 if __name__ == "__main__":
     base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", "pair_0001")

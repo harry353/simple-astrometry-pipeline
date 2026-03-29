@@ -9,7 +9,7 @@ RANDOM_SEED = 25
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 200   # total haystack/needle pairs to generate
+NUM_PAIRS  = 100   # total haystack/needle pairs to generate
 NUM_CORES  = 16    # parallel worker processes
 
 
@@ -41,8 +41,9 @@ WCS_ERROR_MAX = 15   # pixels
 
 
 # ── Phase correlation ─────────────────────────────────────────────────────────
-UPSAMPLE_FACTOR = 100   # subpixel precision = 1/UPSAMPLE_FACTOR px
-SUBPIXEL_AREA   = 5     # window size for quadratic peak refinement
+UPSAMPLE_FACTOR      = 100   # subpixel precision = 1/UPSAMPLE_FACTOR px
+SUBPIXEL_AREA        = 5     # window size for quadratic peak refinement
+SAVE_CORRELATION_MAP = True  # save PNG of correlation map per pair
 
 
 # ── Pipeline control ──────────────────────────────────────────────────────────
@@ -52,3 +53,4 @@ SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 
 # ── Candidate extraction ──────────────────────────────────────────────────────
 CANDIDATE_NEEDLE_SIZE = 300
+
