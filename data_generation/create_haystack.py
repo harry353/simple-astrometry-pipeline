@@ -50,7 +50,7 @@ def create_galaxy_haystack(size=1500, num_blobs=None):
 def create_wcs_header(size, fov_deg):
     """Creates a basic WCS header for the given size and field of view."""
     # Pixel scale in degrees/pixel
-    # fov_deg = 10 / 60 = 1/6
+    # fov_deg = 5 / 60 = 1/12
     scale = fov_deg / size 
     
     w = WCS(naxis=2)
@@ -103,7 +103,7 @@ def main(output_dir=None, filename_prefix="haystack", save_clean=True):
     size = getattr(constants, 'HAYSTACK_SIZE', 3000)
     out_path = output_dir if output_dir else constants.FITS_DIR
 
-    fov_deg = 10.0 / 60.0
+    fov_deg = 5.0 / 60.0
     haystack_img = create_galaxy_haystack(size)
     header = create_wcs_header(size, fov_deg)
     print(f"Created WCS Header for {fov_deg:.4f} deg FOV ({size}px)")
