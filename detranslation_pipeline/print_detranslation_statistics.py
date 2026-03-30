@@ -6,7 +6,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
 
-DATASET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation", "dataset")
+DATASET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset")
 
 
 def collect_statistics():
@@ -23,16 +23,16 @@ def collect_statistics():
 
         haystack_path       = os.path.join(pair_dir, f"haystack_{pair_num}.fits")
         needle_path         = os.path.join(pair_dir, f"needle_{pair_num}.fits")
-        corrected_needle_path = os.path.join(pair_dir, "corrected_needle.fits")
+        detranslated_needle_path = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
 
-        if not all(os.path.exists(p) for p in [haystack_path, needle_path, corrected_needle_path]):
+        if not all(os.path.exists(p) for p in [haystack_path, needle_path, detranslated_needle_path]):
             continue
 
         with fits.open(haystack_path) as hdul:
             header_haystack = hdul[0].header
         with fits.open(needle_path) as hdul:
             header_needle = hdul[0].header
-        with fits.open(corrected_needle_path) as hdul:
+        with fits.open(detranslated_needle_path) as hdul:
             header_corrected = hdul[0].header
 
         wcs_h = WCS(header_haystack)

@@ -66,7 +66,7 @@ def plot_all(haystack_path=None, needle_path=None):
     needle_size = constants.NEEDLE_SIZE
     
     # Extract extraction params from constants
-    angle = constants.NEEDLE_ANGLE
+    angle = constants.NEEDLE_ANGLE_MAX
     print(f"Needle location (from header): {coords} (Size={needle_size}, Angle={angle:.2f} deg)")
 
     # 3. Plot

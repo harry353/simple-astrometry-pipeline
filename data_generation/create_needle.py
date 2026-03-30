@@ -210,8 +210,9 @@ def main(output_dir=None, filename_prefix="needle", haystack_dir=None, haystack_
     needle_img_buffer = haystack_clean[y_idx_buffer:y_idx_buffer+buffer_size,
                                        x_idx_buffer:x_idx_buffer+buffer_size].copy()
 
+    angle = np.random.uniform(-constants.NEEDLE_ANGLE_MAX, constants.NEEDLE_ANGLE_MAX)
     needle_modifications = {
-        'angle': constants.NEEDLE_ANGLE,
+        'angle': angle,
         'stretch_y': constants.NEEDLE_STRETCH_Y,
         'stretch_x': constants.NEEDLE_STRETCH_X,
         'noise': constants.NEEDLE_NOISE
@@ -219,6 +220,7 @@ def main(output_dir=None, filename_prefix="needle", haystack_dir=None, haystack_
     needle_noisy = process_needle(needle_img_buffer, needle_modifications, output_size=needle_size)
 
     hdr = build_needle_header(y_idx, x_idx, needle_size, header_haystack)
+    hdr['NANGLE'] = (angle, 'Needle rotation angle in degrees')
 
     save_needles(haystack_clean, needle_noisy, hdr, y_idx, x_idx, needle_size, out_path, filename_prefix)
 

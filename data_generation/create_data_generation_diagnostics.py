@@ -9,7 +9,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 import constants
 
-N_SAMPLES = 4
+N_SAMPLES = 5
 
 DATA_GENERATION_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR         = os.path.join(DATA_GENERATION_DIR, "dataset")
@@ -23,7 +23,7 @@ def iter_pairs(root_dir):
 
 
 def load_wcs_errors(root_dir):
-    ex, ey = [], []
+    ex, ey, angles = [], [], []
     for _, pair_path in iter_pairs(root_dir):
         for f in os.listdir(pair_path):
             if f.startswith("needle_") and f.endswith(".fits") and "ground_truth" not in f:
@@ -31,7 +31,9 @@ def load_wcs_errors(root_dir):
                 if "WERR_XPX" in hdr:
                     ex.append(hdr["WERR_XPX"])
                     ey.append(hdr["WERR_YPX"])
-    return np.array(ex), np.array(ey)
+                if "NANGLE" in hdr:
+                    angles.append(hdr["NANGLE"])
+    return np.array(ex), np.array(ey), np.array(angles)
 
 
 def load_samples(root_dir, n):
@@ -74,16 +76,18 @@ def load_samples(root_dir, n):
 def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "diagnostics.png")):
     print("Loading samples and WCS errors...")
     samples = load_samples(root_dir, N_SAMPLES)
-    ex, ey = load_wcs_errors(root_dir)
+    ex, ey, angles = load_wcs_errors(root_dir)
 
     n = len(samples)
-    fig = plt.figure(figsize=(4 * max(n, 4), 14))
+    fig = plt.figure(figsize=(4 * max(n, 5), 14))
     fig.suptitle(f"Data Generation Diagnostics  ({len(ex)} pairs)", fontsize=14, y=1.01)
+
+    cols = max(n, 5)
 
     # Row 1 — haystacks with needle location marked
     half = constants.NEEDLE_SIZE / 2
     for i, (haystack, _, _, needle_cx, needle_cy) in enumerate(samples):
-        ax = fig.add_subplot(4, max(n, 4), i + 1)
+        ax = fig.add_subplot(4, cols, i + 1)
         ax.imshow(haystack, cmap="viridis", origin="lower")
         if needle_cx is not None:
             rect = patches.Rectangle(
@@ -97,26 +101,26 @@ def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "di
 
     # Row 2 — noisy needles
     for i, (_, needle, _, _, _) in enumerate(samples):
-        ax = fig.add_subplot(4, max(n, 4), max(n, 4) + i + 1)
+        ax = fig.add_subplot(4, cols, cols + i + 1)
         ax.imshow(needle, cmap="viridis", origin="lower")
         ax.set_title(f"Needle {i+1} (noisy)", fontsize=9)
         ax.axis("off")
 
     # Row 3 — ground truth needles
     for i, (_, _, needle_gt, _, _) in enumerate(samples):
-        ax = fig.add_subplot(4, max(n, 4), 2 * max(n, 4) + i + 1)
+        ax = fig.add_subplot(4, cols, 2 * cols + i + 1)
         ax.imshow(needle_gt, cmap="viridis", origin="lower")
         ax.set_title(f"Needle {i+1} (ground truth)", fontsize=9)
         ax.axis("off")
 
-    # Row 4 — WCS error statistics
-    cols = max(n, 4)
+    # Row 4 — WCS error statistics + rotation histogram
     offset = 3 * cols + 1
 
     ax_sc = fig.add_subplot(4, cols, offset)
     ax_hx = fig.add_subplot(4, cols, offset + 1)
     ax_hy = fig.add_subplot(4, cols, offset + 2)
     ax_mg = fig.add_subplot(4, cols, offset + 3)
+    ax_rot = fig.add_subplot(4, cols, offset + 4)
 
     if len(ex) == 0:
         for ax, title in [(ax_sc, "WCS error scatter"),
@@ -149,6 +153,16 @@ def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "di
         ax_mg.hist(mag, bins=30, color="mediumseagreen", edgecolor="none")
         ax_mg.set_xlabel("Error magnitude (px)")
         ax_mg.set_title(f"WCS error magnitude  (μ={mag.mean():.1f})")
+
+    if len(angles) == 0:
+        ax_rot.text(0.5, 0.5, "No rotation data\n(regenerate dataset)",
+                    ha="center", va="center", transform=ax_rot.transAxes)
+        ax_rot.set_title("Rotation angle")
+    else:
+        ax_rot.hist(angles, bins=30, color="mediumpurple", edgecolor="none")
+        ax_rot.axvline(0, color="k", linewidth=0.5)
+        ax_rot.set_xlabel("Rotation angle (deg)")
+        ax_rot.set_title(f"Rotation  (μ={angles.mean():.2f}°, σ={angles.std():.2f}°)")
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=120, bbox_inches="tight")

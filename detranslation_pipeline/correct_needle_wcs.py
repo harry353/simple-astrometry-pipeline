@@ -23,19 +23,22 @@ def main(haystack_path, needle_path, shift_x, shift_y):
 
     print(f"Corrected CRVAL: RA={corrected_ra:.6f} deg  Dec={corrected_dec:.6f} deg")
 
-    # Build corrected header — update CRVAL only, CRPIX unchanged
+    nh, nw = needle.shape
     corrected_header = header_needle.copy()
+    corrected_header['CRPIX1'] = nw / 2 + 0.5   # FITS 1-based geometric centre
+    corrected_header['CRPIX2'] = nh / 2 + 0.5
     corrected_header['CRVAL1'] = corrected_ra
     corrected_header['CRVAL2'] = corrected_dec
 
     # Save corrected FITS (original untouched)
     pair_dir        = os.path.dirname(needle_path)
-    fits_out        = os.path.join(pair_dir, "corrected_needle.fits")
+    pair_num        = os.path.basename(pair_dir).split("_")[1]
+    fits_out        = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
     fits.writeto(fits_out, needle, header=corrected_header, overwrite=True)
     print(f"Saved corrected FITS to {fits_out}")
 
     # Save PNG copy
-    png_out = os.path.join(pair_dir, "corrected_needle.png")
+    png_out = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.png")
     plt.imsave(png_out, needle, cmap='viridis')
     print(f"Saved PNG to {png_out}")
 

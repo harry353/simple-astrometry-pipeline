@@ -24,7 +24,6 @@ NEEDLE_SIZE      = 300   # square cutout size (px)
 BUFFER_SIZE      = 400   # extraction region before centre-crop
 NEEDLE_NOISE     = 0.2   # Gaussian noise sigma (higher than haystack by design)
 
-NEEDLE_ANGLE     = 0.0   # rotation in degrees
 NEEDLE_STRETCH_Y = 1.0   # zoom factor along y
 NEEDLE_STRETCH_X = 1.0   # zoom factor along x
 
@@ -34,10 +33,12 @@ MIN_CENTRAL_GALAXIES  = 1
 CENTRAL_REGION_SIZE   = 50   # inner square (px) checked for central galaxies
 
 
-# ── WCS error ─────────────────────────────────────────────────────────────────
+# ── Needle error ───────────────────────────────────────────────────────────────
 # Each needle's CRPIX is offset by a random draw from U(-WCS_ERROR_MAX, +WCS_ERROR_MAX)
 # independently on each axis, simulating an imprecise initial astrometric solution.
-WCS_ERROR_MAX = 15   # pixels
+# Similarly for NEEDLE_ANGLE_MAX, but for rotation instead of translation.
+WCS_ERROR_MAX    = 15    # pixels
+NEEDLE_ANGLE_MAX = 0.8   # max rotation in degrees — needle drawn from U(-MAX, +MAX)
 
 
 # ── Template matching ─────────────────────────────────────────────────────────
@@ -46,7 +47,7 @@ SAVE_CORRELATION_MAP = True  # save PNG of correlation map per pair
 
 
 # ── Pipeline control ──────────────────────────────────────────────────────────
-TRANSLATION_PIPELINE_PAIRS = 100   # pairs to run through correction pipeline (0 = all)
+TRANSLATION_PIPELINE_PAIRS = 10    # pairs to run through correction pipeline (0 = all)
 SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 
 
