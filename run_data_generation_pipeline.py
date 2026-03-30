@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 
 DATA_GENERATION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation")
 sys.path.insert(0, DATA_GENERATION_DIR)
@@ -60,9 +61,11 @@ def generate_single_pair(i, root_dir, save_clean):
 
 
 def setup_output_dir(root_dir):
-    if not os.path.exists(root_dir):
-        os.makedirs(root_dir)
-        print(f"Created root directory: {root_dir}")
+    if os.path.exists(root_dir):
+        shutil.rmtree(root_dir)
+        print(f"Cleared existing data in {root_dir}")
+    os.makedirs(root_dir)
+    print(f"Created root directory: {root_dir}")
 
 
 def run_parallel_generation(num_pairs, root_dir, save_clean, num_cores):

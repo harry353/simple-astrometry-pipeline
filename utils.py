@@ -4,29 +4,41 @@ from scipy.signal import windows, wiener
 from astropy.io import fits
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
+from skimage.feature import match_template
 
 
-def save_phase_correlation_map(img1, img2, haystack_path, output_path=None):
-    """Compute and save the normalised cross-power spectrum (phase correlation map).
+def match_template_subpixel(haystack, needle):
+    import constants
+    r       = constants.SUBPIXEL_AREA // 2
+    result  = match_template(haystack, needle, pad_input=True)
+    yi, xi  = np.unravel_index(np.argmax(result), result.shape)
 
-    Normalising the cross-power spectrum to unit magnitude before the IFFT
-    means every frequency contributes equally regardless of its energy,
-    producing a sharp impulse at the true shift rather than a broad peak.
-    """
+    patch = result[yi-r:yi+r+1, xi-r:xi+r+1]
 
-    F1 = np.fft.fft2(img1)
-    F2 = np.fft.fft2(img2)
-    cross = F1 * np.conj(F2)
-    denom = np.abs(cross)
-    denom[denom == 0] = 1e-10
-    corr_map = np.fft.fftshift(np.fft.ifft2(cross / denom).real)
+    # Fit a parabola f(x) = a*x^2 + b*x + c through the three centre values
+    # along each axis (at x = -1, 0, +1). The peak is at x = -b / (2a).
+    for axis, (f_neg, f_0, f_pos) in enumerate([
+        (patch[r-1, r], patch[r, r], patch[r+1, r]),   # y axis
+        (patch[r, r-1], patch[r, r], patch[r, r+1]),   # x axis
+    ]):
+        a = (f_pos + f_neg - 2*f_0) / 2   # curvature
+        b = (f_pos - f_neg)          / 2   # slope at centre
+        offset = -b / (2 * a)              # peak offset from centre pixel
+        if axis == 0:
+            dy = offset
+        else:
+            dx = offset
 
-    if output_path is None:
-        output_path = os.path.join(
-            os.path.dirname(haystack_path),
-            os.path.splitext(os.path.basename(haystack_path).replace("haystack", "correlation_map"))[0] + ".png"
-        )
-    plt.imsave(output_path, corr_map, cmap='magma', vmin=corr_map.min(), vmax=corr_map.max())
+    H, W    = haystack.shape
+    shift_x = (xi + dx) - W / 2
+    shift_y = (yi + dy) - H / 2
+    return shift_x, shift_y, result
+
+
+def save_correlation_map(corr_map, haystack_path):
+    pair_num    = os.path.basename(os.path.dirname(haystack_path))
+    output_path = os.path.join(os.path.dirname(haystack_path), f"correlation_map_{pair_num}.png")
+    plt.imsave(output_path, corr_map, cmap='magma')
     print(f"Saved correlation map to {output_path}")
 
 
@@ -37,16 +49,16 @@ def prepare_images(haystack, needle):
         haystack = np.nan_to_num(wiener(haystack, mysize=7),  nan=0.0)
         needle   = np.nan_to_num(wiener(needle,   mysize=11), nan=0.0)
 
-    canvas = pad_to_size(needle, H, W)
+    padded_needle = pad_to_size(needle, H, W)
 
     window     = np.outer(windows.hann(H), windows.hann(W))
     w_haystack = np.copy(haystack)
-    w_canvas   = np.copy(canvas)
-    return w_haystack, w_canvas
+    w_padded_needle   = np.copy(padded_needle)
+    return w_haystack, w_padded_needle
 
 
 def pad_to_size(img, H, W):
-    canvas = np.zeros((H, W), dtype=np.float64)
+    canvas = np.full((H, W), img.mean(), dtype=np.float64)
     nh, nw = img.shape
     y0 = (H - nh) // 2
     x0 = (W - nw) // 2
