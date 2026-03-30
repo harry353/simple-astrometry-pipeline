@@ -24,6 +24,8 @@ def main(haystack_path, needle_path):
     if constants.SAVE_CORRELATION_MAP:
         save_correlation_map(result, haystack_path)
 
+    return shift_x, shift_y
+
 
 if __name__ == "__main__":
     main(

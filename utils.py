@@ -29,9 +29,16 @@ def match_template_subpixel(haystack, needle):
         else:
             dx = offset
 
+    # skimage pad_input=True pads by nh//2 rows and nw//2 cols, making its
+    # "centre" pixel index nh//2 (0-based). The geometric centre is (nh-1)/2.
+    # For even template sizes these differ by 0.5 px — correct for that here.
+    nh, nw  = needle.shape
+    x_bias  = nw // 2 - (nw - 1) / 2   # 0.5 for even, 0.0 for odd
+    y_bias  = nh // 2 - (nh - 1) / 2
+
     H, W    = haystack.shape
-    shift_x = (xi + dx) - W / 2
-    shift_y = (yi + dy) - H / 2
+    shift_x = (xi + dx - x_bias) - W / 2
+    shift_y = (yi + dy - y_bias) - H / 2
     return shift_x, shift_y, result
 
 
