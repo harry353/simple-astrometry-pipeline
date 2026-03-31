@@ -7,6 +7,7 @@ sys.path.insert(0, DETRANSLATION_DIR)
 
 import constants
 import apply_matched_filtering
+import export_candidate_needle
 import correct_needle_wcs
 import print_detranslation_statistics
 
@@ -37,6 +38,7 @@ def main():
         print(f"{'='*60}")
 
         shift_x, shift_y = apply_matched_filtering.main(haystack_path, needle_path)
+        export_candidate_needle.main(haystack_path, needle_path, shift_x, shift_y)
         correct_needle_wcs.main(haystack_path, needle_path, shift_x, shift_y)
         print()
 

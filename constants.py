@@ -54,3 +54,7 @@ SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 # ── Candidate extraction ──────────────────────────────────────────────────────
 CANDIDATE_NEEDLE_SIZE = 300
 
+
+# ── Derotation ────────────────────────────────────────────────────────────────
+CENTROID_MATCH_RADIUS = 3   # max distance (px) to match centroids across images
+
