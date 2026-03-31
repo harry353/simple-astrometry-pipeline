@@ -15,10 +15,15 @@ base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 def main(haystack_path, needle_path, shift_x, shift_y):
     haystack, header_haystack, _, _ = load_fits(haystack_path, needle_path)
 
+    # Convert the detected shift into a pixel position in the haystack.
+    # shift_x, shift_y are offsets from the haystack centre, so we add them
+    # to the centre coordinates to get the detected needle centre position.
     H, W = haystack.shape
     cx = int(np.round(W / 2 + shift_x))
     cy = int(np.round(H / 2 + shift_y))
 
+    # Extract a square cutout of NEEDLE_SIZE around the detected centre.
+    # This cutout is what we will compare against the needle in later stages.
     half    = constants.NEEDLE_SIZE // 2
     y0, y1  = cy - half, cy + half
     x0, x1  = cx - half, cx + half
@@ -26,15 +31,17 @@ def main(haystack_path, needle_path, shift_x, shift_y):
 
     print(f"Candidate needle centre: ({cx}, {cy})  cutout: x=[{x0},{x1}) y=[{y0},{y1})")
 
-    # Build a WCS header for the cutout from the haystack WCS
-    wcs_h   = WCS(header_haystack)
+    # Build a WCS header for the cutout by taking the haystack WCS and updating
+    # the reference pixel (CRPIX) and reference coordinate (CRVAL) to match the
+    # cutout's new centre.
+    wcs_h         = WCS(header_haystack)
     cutout_header = header_haystack.copy()
     cutout_header['NAXIS1'] = constants.NEEDLE_SIZE
     cutout_header['NAXIS2'] = constants.NEEDLE_SIZE
-    cutout_header['CRPIX1'] = constants.NEEDLE_SIZE / 2 + 0.5
+    cutout_header['CRPIX1'] = constants.NEEDLE_SIZE / 2 + 0.5   # FITS 1-based geometric centre
     cutout_header['CRPIX2'] = constants.NEEDLE_SIZE / 2 + 0.5
     center_ra, center_dec   = (float(v) for v in wcs_h.pixel_to_world_values(cx, cy))
-    cutout_header['CRVAL1'] = center_ra
+    cutout_header['CRVAL1'] = center_ra    # sky coordinates of the detected needle centre
     cutout_header['CRVAL2'] = center_dec
 
     pair_dir = os.path.dirname(haystack_path)

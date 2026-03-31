@@ -21,10 +21,11 @@ def collect_statistics():
         pair_num = pair_name.split("_")[1]
         pair_dir = os.path.join(DATASET_DIR, pair_name)
 
-        haystack_path       = os.path.join(pair_dir, f"haystack_{pair_num}.fits")
-        needle_path         = os.path.join(pair_dir, f"needle_{pair_num}.fits")
+        haystack_path            = os.path.join(pair_dir, f"haystack_{pair_num}.fits")
+        needle_path              = os.path.join(pair_dir, f"needle_{pair_num}.fits")
         detranslated_needle_path = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
 
+        # Skip pairs that have not yet been processed by the pipeline
         if not all(os.path.exists(p) for p in [haystack_path, needle_path, detranslated_needle_path]):
             continue
 
@@ -35,21 +36,24 @@ def collect_statistics():
         with fits.open(detranslated_needle_path) as hdul:
             header_corrected = hdul[0].header
 
-        wcs_h = WCS(header_haystack)
+        wcs_h    = WCS(header_haystack)
         px_scale = abs(header_haystack.get('CDELT2', 0)) * 3600  # arcsec/px
 
-        # True needle centre in haystack pixels
+        # Project the true needle sky position (CRVAL) back into haystack pixels.
+        # This is where the needle should be if the WCS were perfect.
         true_cx, true_cy = wcs_h.world_to_pixel_values(header_needle['CRVAL1'], header_needle['CRVAL2'])
 
-        # Detected centre (from corrected CRVAL)
+        # Project the corrected sky position into haystack pixels to get where
+        # the pipeline thinks the needle is after correction.
         det_cx, det_cy = wcs_h.world_to_pixel_values(header_corrected['CRVAL1'], header_corrected['CRVAL2'])
 
-        # Initial WCS error (pre-correction)
+        # The initial WCS error was recorded at data generation time and stored
+        # in the needle header as WERR_XPX / WERR_YPX (in pixels).
         wcs_err_x = header_needle.get('WERR_XPX', 0)
         wcs_err_y = header_needle.get('WERR_YPX', 0)
 
-        residual_dx   = float(det_cx - true_cx)
-        residual_dy   = float(det_cy - true_cy)
+        residual_dx   = float(det_cx - true_cx)   # signed residual in x after correction
+        residual_dy   = float(det_cy - true_cy)   # signed residual in y after correction
         residual_dist = float(np.sqrt(residual_dx**2 + residual_dy**2))
         initial_dist  = float(np.sqrt(wcs_err_x**2 + wcs_err_y**2))
 
@@ -57,10 +61,10 @@ def collect_statistics():
             'pair':          pair_num,
             'initial_dx':    float(wcs_err_x),
             'initial_dy':    float(wcs_err_y),
-            'initial_dist':  initial_dist,
+            'initial_dist':  initial_dist,   # WCS error before correction
             'residual_dx':   residual_dx,
             'residual_dy':   residual_dy,
-            'residual_dist': residual_dist,
+            'residual_dist': residual_dist,  # WCS error after correction
             'px_scale':      px_scale,
         })
 
@@ -82,18 +86,17 @@ def print_statistics(records):
     residual_dys   = [r['residual_dy']   for r in records]
     px_scale       = records[0]['px_scale']
 
-    def fmt(val_px):
-        return f"{val_px:+.4f} px  ({val_px * px_scale:+.4f} arcsec)"
-
     print(f"\n{'='*62}")
     print(f"  Detranslation statistics — {len(records)} pairs")
     print(f"{'='*62}")
 
+    # Per-pair table: one row per processed pair showing initial error and residuals
     print(f"  {'Pair':<8} {'init err (px)':>14}  {'res dx (px)':>12}  {'res dy (px)':>12}  {'res dist (px)':>14}")
     print(f"  {'-'*66}")
     for r in records:
         print(f"  {r['pair']:<8} {r['initial_dist']:>14.4f}  {r['residual_dx']:>+12.4f}  {r['residual_dy']:>+12.4f}  {r['residual_dist']:>14.4f}")
 
+    # Aggregate statistics across all pairs
     print(f"\n  {'Metric':<32} {'mean':>10}  {'std':>8}  {'min':>8}  {'max':>8}")
     print(f"  {'-'*60}")
 
@@ -109,6 +112,7 @@ def print_statistics(records):
 
     mean_initial  = np.mean(initial_dists)
     mean_residual = np.mean(residual_dists)
+    # Improvement: how much of the original WCS error was removed by the pipeline
     improvement   = (1 - mean_residual / mean_initial) * 100 if mean_initial > 0 else 0
 
     print(f"  {'-'*60}")

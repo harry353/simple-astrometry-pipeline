@@ -14,10 +14,14 @@ base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 def main(haystack_path, needle_path, shift_x, shift_y):
     haystack, header_haystack, needle, header_needle = load_fits(haystack_path, needle_path)
 
-    # Convert detected haystack pixel position to sky coordinates
+    # To correct the needle WCS, we:
+    #   1. Find where the needle centre actually is in the haystack (via the shift)
+    #   2. Convert that position to sky coordinates using the haystack WCS
+    #   3. Reset CRPIX to the geometric centre of the needle
+    #   4. Set CRVAL to the sky coordinates we just computed
     H, W = haystack.shape
-    det_cx = W / 2 + shift_x
-    det_cy = H / 2 + shift_y
+    det_cx = W / 2 + shift_x   # detected needle centre in haystack pixels (x)
+    det_cy = H / 2 + shift_y   # detected needle centre in haystack pixels (y)
     wcs_haystack = WCS(header_haystack)
     corrected_ra, corrected_dec = (float(v) for v in wcs_haystack.pixel_to_world_values(det_cx, det_cy))
 
@@ -27,17 +31,17 @@ def main(haystack_path, needle_path, shift_x, shift_y):
     corrected_header = header_needle.copy()
     corrected_header['CRPIX1'] = nw / 2 + 0.5   # FITS 1-based geometric centre
     corrected_header['CRPIX2'] = nh / 2 + 0.5
-    corrected_header['CRVAL1'] = corrected_ra
+    corrected_header['CRVAL1'] = corrected_ra    # sky position of the needle centre
     corrected_header['CRVAL2'] = corrected_dec
 
-    # Save corrected FITS (original untouched)
-    pair_dir        = os.path.dirname(needle_path)
-    pair_num        = os.path.basename(pair_dir).split("_")[1]
-    fits_out        = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
+    # Save the corrected needle. The pixel data is identical to the original,
+    # only the WCS header has changed.
+    pair_dir = os.path.dirname(needle_path)
+    pair_num = os.path.basename(pair_dir).split("_")[1]
+    fits_out = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
     fits.writeto(fits_out, needle, header=corrected_header, overwrite=True)
     print(f"Saved corrected FITS to {fits_out}")
 
-    # Save PNG copy
     png_out = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.png")
     plt.imsave(png_out, needle, cmap='viridis')
     print(f"Saved PNG to {png_out}")
