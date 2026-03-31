@@ -22,7 +22,7 @@ def create_galaxy_haystack(size=1500, num_blobs=None):
     print(f"Generating {size}x{size} haystack...")
     for _ in range(num_blobs):
         cy, cx = np.random.randint(100, size-100, 2)
-        sy, sx = np.random.uniform(5, 25), np.random.uniform(2, 10)
+        sy, sx = np.random.uniform(*constants.GALAXY_SIZE_Y), np.random.uniform(*constants.GALAXY_SIZE_X)
         ang = np.random.uniform(0, 180)
         amp = np.random.uniform(0.5, 1.0)
         

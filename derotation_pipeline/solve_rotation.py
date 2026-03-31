@@ -15,12 +15,12 @@ def solve_rotation_lstsq(src_pts, dst_pts):
     """Fit rotation angle from N matched point pairs via least squares.
 
     For a pure rotation:  dst = R * src
-        [cos t  -sin t] [x]   [x']
-        [sin t   cos t] [y] = [y']
+        ⎡cos t  -sin t⎤ ⎡x⎤   ⎡x'⎤
+        ⎣sin t   cos t⎦ ⎣y⎦ = ⎣y'⎦
 
     Rearranged as a linear system:
-        [x  -y] [cos t]   [x']
-        [y   x] [sin t] = [y']
+        ⎡x  -y⎤ ⎡cos t⎤   ⎡x'⎤
+        ⎣y   x⎦ ⎣sin t⎦ = ⎣y'⎦
 
     Solve for (cos t, sin t) then recover t = atan2(sin t, cos t).
     """
@@ -91,8 +91,9 @@ def main(pair_dir, plot=False):
     needle_path = os.path.join(pair_dir, f"needle_{PAIR_NUM}.fits")
     if 'NANGLE' in afits.getheader(needle_path):
         true_angle = afits.getheader(needle_path)['NANGLE']
-        print(f"True angle:             {true_angle:.4f}°")
-        print(f"Error (refined):        {abs(refined_angle - true_angle):.4f}°")
+        print(f"True angle:                 {true_angle:.4f}°")
+        print(f"Residual error (refined):   {abs(refined_angle - true_angle):.4f}°")
+        print(f"Residual error (voted):     {abs(voted_angle - true_angle):.4f}°")
 
     if plot:
         fig, axes = plt.subplots(1, 2, figsize=(13, 5))
@@ -125,7 +126,7 @@ def main(pair_dir, plot=False):
         plt.tight_layout()
         plt.show()
 
-    return refined_angle
+    return voted_angle, refined_angle
 
 
 if __name__ == "__main__":

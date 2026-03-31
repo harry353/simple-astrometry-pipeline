@@ -97,6 +97,8 @@ def main(pair_dir, plot=False):
     # Save all triangle data to a CSV for later analysis
     df_tri = pd.DataFrame(triangle_data)
     df_tri.to_csv(output_csv, index=False)
+    # i, j, k are row indices into the matched centroids CSV. So i=0, j=2, k=5 means the
+    # triangle is formed by the 1st, 3rd, and 6th matched source pairs.
     print(f"Built {len(df_tri)} triangles from {len(df)} matched points")
     print(df_tri[['i','j','k','c_ratio_ab','c_ratio_bc','c_angle_A','c_angle_B','c_angle_C']].to_string(index=False))
     print(f"Saved {output_csv}")
