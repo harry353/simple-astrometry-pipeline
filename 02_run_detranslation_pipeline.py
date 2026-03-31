@@ -6,10 +6,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DETRANSLATION_DIR)
 
 import constants
-import apply_matched_filtering
-import export_candidate_needle
-import correct_needle_wcs
-import print_detranslation_statistics
+import importlib
+apply_matched_filtering     = importlib.import_module("01_apply_matched_filtering")
+export_candidate_needle     = importlib.import_module("02_export_candidate_needle")
+correct_needle_wcs          = importlib.import_module("03_correct_needle_wcs")
+print_detranslation_statistics = importlib.import_module("04_print_detranslation_statistics")
 
 DATASET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation", "dataset")
 

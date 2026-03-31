@@ -13,8 +13,9 @@ base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 
 
 def main(pair_dir, voted_angle, plot=False):
-    detranslated_path = os.path.join(pair_dir, f"detranslated_needle_{PAIR_NUM}.fits")
-    output_path       = os.path.join(pair_dir, f"corrected_needle_{PAIR_NUM}.fits")
+    pair_num = os.path.basename(pair_dir).split("_")[1]
+    detranslated_path = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
+    output_path       = os.path.join(pair_dir, f"corrected_needle_{pair_num}.fits")
 
     with fits.open(detranslated_path) as f:
         image  = f[0].data.astype(np.float64)
@@ -71,7 +72,7 @@ def main(pair_dir, voted_angle, plot=False):
         ]:
             ax.imshow(img, cmap='viridis', origin='lower',
                       vmin=np.percentile(img, 1), vmax=np.percentile(img, 99))
-            ax.set_title(f"{title} -- pair {PAIR_NUM}")
+            ax.set_title(f"{title} -- pair {pair_num}")
             ax.axis('off')
 
         plt.suptitle(f"WCS derotation  ({voted_angle:.4f} deg)", y=1.01)
@@ -82,6 +83,7 @@ def main(pair_dir, voted_angle, plot=False):
 
 
 if __name__ == "__main__":
-    import solve_rotation
+    import importlib
+    solve_rotation = importlib.import_module("04_solve_rotation")
     voted_angle, _ = solve_rotation.main(pair_dir=base)
     main(pair_dir=base, voted_angle=voted_angle, plot=True)

@@ -9,7 +9,7 @@ RANDOM_SEED = 25
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 100   # total haystack/needle pairs to generate
+NUM_PAIRS  = 10    # total haystack/needle pairs to generate
 NUM_CORES  = 16    # parallel worker processes
 
 
@@ -49,7 +49,7 @@ SAVE_CORRELATION_MAP = True  # save PNG of correlation map per pair
 
 
 # ── Pipeline control ──────────────────────────────────────────────────────────
-TRANSLATION_PIPELINE_PAIRS = 1     # pairs to run through correction pipeline (0 = all)
+TRANSLATION_PIPELINE_PAIRS = 10    # pairs to run through correction pipeline (0 = all)
 SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 
 

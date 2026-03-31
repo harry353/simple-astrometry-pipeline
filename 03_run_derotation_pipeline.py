@@ -6,11 +6,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEROTATION_DIR)
 
 import constants
-import detect_centroids
-import match_centroids
-import build_triangles
-import solve_rotation
-import apply_derotation
+import importlib
+detect_centroids            = importlib.import_module("01_detect_centroids")
+match_centroids             = importlib.import_module("02_match_centroids")
+build_triangles             = importlib.import_module("03_build_triangles")
+solve_rotation              = importlib.import_module("04_solve_rotation")
+apply_derotation            = importlib.import_module("05_apply_derotation")
+print_derotation_statistics = importlib.import_module("06_print_derotation_statistics")
 
 DATASET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation", "dataset")
 
@@ -42,6 +44,9 @@ def main():
         voted_angle, refined_angle = solve_rotation.main(pair_dir=pair_dir)
         apply_derotation.main(pair_dir=pair_dir, voted_angle=voted_angle)
         print()
+
+    records = print_derotation_statistics.collect_statistics()
+    print_derotation_statistics.print_statistics(records)
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from itertools import combinations
 
-PAIR_NUM = "0001"
+PAIR_NUM = "0004"
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
@@ -42,10 +42,11 @@ def triangle_descriptors(p0, p1, p2):
 
 
 def main(pair_dir, plot=False):
+    pair_num = os.path.basename(pair_dir).split("_")[1]
     # Load matched centroids from previous step. Each row corresponds 
     # to a single matched source pair
-    matched_csv = os.path.join(pair_dir, f"centroids_matched_{PAIR_NUM}.csv")
-    output_csv  = os.path.join(pair_dir, f"triangles_{PAIR_NUM}.csv")
+    matched_csv = os.path.join(pair_dir, f"centroids_matched_{pair_num}.csv")
+    output_csv  = os.path.join(pair_dir, f"triangles_{pair_num}.csv")
 
     df = pd.read_csv(matched_csv)
     print(f"Loaded {len(df)} matched centroids")

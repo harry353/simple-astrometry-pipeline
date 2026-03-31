@@ -7,15 +7,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import constants
 
-PAIR_NUM = "0001"
+PAIR_NUM = "0004"
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
 
 def main(pair_dir, plot=False):
-    candidate_csv    = os.path.join(pair_dir, f"centroids_candidate_{PAIR_NUM}.csv")
-    detranslated_csv = os.path.join(pair_dir, f"centroids_detranslated_{PAIR_NUM}.csv")
-    output_csv       = os.path.join(pair_dir, f"centroids_matched_{PAIR_NUM}.csv")
+    pair_num = os.path.basename(pair_dir).split("_")[1]
+    candidate_csv    = os.path.join(pair_dir, f"centroids_candidate_{pair_num}.csv")
+    detranslated_csv = os.path.join(pair_dir, f"centroids_detranslated_{pair_num}.csv")
+    output_csv       = os.path.join(pair_dir, f"centroids_matched_{pair_num}.csv")
 
     # Load the centroid lists produced by detect_centroids.py. Each row is a
     # single source with its flux-weighted pixel position (x, y) and integrated flux.
@@ -97,7 +98,7 @@ def main(pair_dir, plot=False):
 
         ax.set_aspect('equal')
         ax.invert_yaxis()
-        ax.set_title(f"Matched centroids - pair {PAIR_NUM}  ({len(df_matched)} matches)")
+        ax.set_title(f"Matched centroids - pair {pair_num}  ({len(df_matched)} matches)")
         plt.tight_layout()
         plt.show()
 

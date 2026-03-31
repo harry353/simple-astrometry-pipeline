@@ -9,7 +9,7 @@ from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from photutils.segmentation import detect_sources, SourceCatalog
 
-PAIR_NUM = "0001"
+PAIR_NUM = "0004"
 SIGMA    = 5    # detection threshold in units of background sigma
 NPIXELS  = 40   # minimum connected pixels to be counted as a source
 
@@ -36,8 +36,9 @@ def detect_centroids(image):
 
 
 def main(pair_dir, plot=False):
-    candidate_path    = os.path.join(pair_dir, f"candidate_needle_{PAIR_NUM}.fits")
-    detranslated_path = os.path.join(pair_dir, f"detranslated_needle_{PAIR_NUM}.fits")
+    pair_num = os.path.basename(pair_dir).split("_")[1]
+    candidate_path    = os.path.join(pair_dir, f"candidate_needle_{pair_num}.fits")
+    detranslated_path = os.path.join(pair_dir, f"detranslated_needle_{pair_num}.fits")
 
     # Load both images
     with fits.open(candidate_path) as f:
@@ -53,8 +54,8 @@ def main(pair_dir, plot=False):
     # does NOT yet correspond between the two files; that matching happens
     # in match_centroids.py.
     for label, cat, filename in [
-        ("Candidate",    cat_candidate,    f"centroids_candidate_{PAIR_NUM}.csv"),
-        ("Detranslated", cat_detranslated, f"centroids_detranslated_{PAIR_NUM}.csv"),
+        ("Candidate",    cat_candidate,    f"centroids_candidate_{pair_num}.csv"),
+        ("Detranslated", cat_detranslated, f"centroids_detranslated_{pair_num}.csv"),
     ]:
         n = len(cat) if cat is not None else 0
         print(f"{label}: {n} sources detected")
@@ -87,7 +88,7 @@ def main(pair_dir, plot=False):
                 ax.scatter(catalog.xcentroid, catalog.ycentroid,
                            s=60, facecolors='none', edgecolors='red', linewidths=1.2)
             n = len(catalog) if catalog is not None else 0
-            ax.set_title(f"{title} — pair {PAIR_NUM}  ({n} sources)")
+            ax.set_title(f"{title} — pair {pair_num}  ({n} sources)")
             ax.axis('off')
 
         plt.tight_layout()
