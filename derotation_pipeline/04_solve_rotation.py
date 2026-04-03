@@ -14,15 +14,35 @@ base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 def solve_rotation_lstsq(src_pts, dst_pts):
     """Fit rotation angle from N matched point pairs via least squares.
 
-    For a pure rotation:  dst = R * src
-        ⎡cos t  -sin t⎤ ⎡x⎤   ⎡x'⎤
-        ⎣sin t   cos t⎦ ⎣y⎦ = ⎣y'⎦
+    Derivation of the linear system. Starting from the rotation equation 
+    for a single point:
 
-    Rearranged as a linear system:
-        ⎡x  -y⎤ ⎡cos t⎤   ⎡x'⎤
-        ⎣y   x⎦ ⎣sin t⎦ = ⎣y'⎦
+        ⎡cos θ  -sin θ⎤ ⎡x⎤   ⎡x'⎤
+        ⎣sin θ   cos θ⎦ ⎣y⎦ = ⎣y'⎦
 
-    Solve for (cos t, sin t) then recover t = atan2(sin t, cos t).
+    Multiply out row by row:
+
+        x' = x·cos θ - y·sin θ
+        y' = y·cos θ + x·sin θ
+
+    The unknowns are (cos θ, sin θ), not (x, y). Rewrite each equation
+    as a dot product with the unknown vector on the right:
+
+        x·cos θ - y·sin θ = x'  =>  ⎡x  -y⎤ ⎡cos θ⎤   ⎡x'⎤
+        y·cos θ + x·sin θ = y'  =>  ⎣y   x⎦ ⎣sin θ⎦ = ⎣y'⎦
+
+    This is one 2×2 block per point pair. For n pairs, stack all blocks:
+
+        ⎡x₁  -y₁⎤             ⎡x₁'⎤
+        ⎢y₁   x₁⎥             ⎢y₁'⎥
+        ⎢x₂  -y₂⎥ ⎡cos θ⎤     ⎢x₂'⎥
+        ⎢y₂   x₂⎥ ⎣sin θ⎦  =  ⎢y₂'⎥
+        ⎢:    : ⎥             ⎢ : ⎥
+        ⎢xₙ  -yₙ⎥             ⎢xₙ'⎥
+        ⎣yₙ   xₙ⎦             ⎣yₙ'⎦
+
+    This is A·p = b, solved via least squares for p = (cos θ, sin θ).
+    The angle is then recovered as θ = atan2(sin θ, cos θ).
     """
     A = np.zeros((2 * len(src_pts), 2))     # coefficient matrix: 2 rows per point pair
     b = np.zeros(2 * len(src_pts))          # right-hand side: the destination coordinates
