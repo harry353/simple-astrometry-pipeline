@@ -14,9 +14,9 @@ NUM_CORES  = 8    # parallel worker processes
 
 
 # ── Haystack ──────────────────────────────────────────────────────────────────
-HAYSTACK_SIZE    = 1000  # square image size (px)
+HAYSTACK_SIZE    = 1500  # square image size (px)
 HAYSTACK_NOISE   = 0.1   # Gaussian noise sigma
-GALAXY_DENSITY   = 30    # blobs per 1,000,000 pixels
+GALAXY_DENSITY   = 50    # blobs per 1,000,000 pixels
 GALAXY_SIZE_Y    = (2, 10)   # Gaussian sigma range along major axis (px)   
 GALAXY_SIZE_X    = (1, 5)   # Gaussian sigma range along minor axis (px)
 
@@ -30,7 +30,7 @@ NEEDLE_STRETCH_Y = 1.0   # zoom factor along y
 NEEDLE_STRETCH_X = 1.0   # zoom factor along x
 
 # Minimum galaxy content required in an accepted needle region
-MIN_GALAXIES          = 4
+MIN_GALAXIES          = 5
 MIN_CENTRAL_GALAXIES  = 1
 CENTRAL_REGION_SIZE   = 50   # inner square (px) checked for central galaxies
 
