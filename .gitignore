@@ -2,3 +2,5 @@
 *.fits
 *.png
 *.csv
+.vscode/
+__pycache__/
