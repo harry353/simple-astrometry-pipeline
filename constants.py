@@ -9,12 +9,12 @@ RANDOM_SEED = 25
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 100   # total haystack/needle pairs to generate
-NUM_CORES  = 16    # parallel worker processes
+NUM_PAIRS  = 100  # total haystack/needle pairs to generate
+NUM_CORES  = 8    # parallel worker processes
 
 
 # ── Haystack ──────────────────────────────────────────────────────────────────
-HAYSTACK_SIZE    = 1500  # square image size (px)
+HAYSTACK_SIZE    = 1000  # square image size (px)
 HAYSTACK_NOISE   = 0.1   # Gaussian noise sigma
 GALAXY_DENSITY   = 30    # blobs per 1,000,000 pixels
 GALAXY_SIZE_Y    = (2, 10)   # Gaussian sigma range along major axis (px)   

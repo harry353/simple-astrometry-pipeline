@@ -114,14 +114,15 @@ def find_needle_region(haystack_clean, needle_size, buffer_size):
 
         attempts += 1
 
-    if galaxies_found < min_galaxies or central_galaxies < min_central:
+    region_ok = galaxies_found >= min_galaxies and central_galaxies >= min_central
+    if not region_ok:
         print(f"Warning: Could not find a matching region after {max_attempts} attempts.")
     else:
         print(f"Found region with {galaxies_found} galaxies ({central_galaxies} central) after {attempts} attempts.")
 
     print(f"Needle Buffer: {buffer_size}x{buffer_size} at ({y_idx_buffer}, {x_idx_buffer})")
     print(f"Needle Target: {needle_size}x{needle_size} at ({y_idx}, {x_idx})")
-    return y_idx, x_idx, y_idx_buffer, x_idx_buffer
+    return y_idx, x_idx, y_idx_buffer, x_idx_buffer, region_ok
 
 
 def build_needle_header(y_idx, x_idx, needle_size, header_haystack):
@@ -205,7 +206,7 @@ def main(output_dir=None, filename_prefix="needle", haystack_dir=None, haystack_
     else:
         print("Using in-memory haystack data")
 
-    y_idx, x_idx, y_idx_buffer, x_idx_buffer = find_needle_region(haystack_clean, needle_size, buffer_size)
+    y_idx, x_idx, y_idx_buffer, x_idx_buffer, region_ok = find_needle_region(haystack_clean, needle_size, buffer_size)
 
     needle_img_buffer = haystack_clean[y_idx_buffer:y_idx_buffer+buffer_size,
                                        x_idx_buffer:x_idx_buffer+buffer_size].copy()
@@ -223,6 +224,7 @@ def main(output_dir=None, filename_prefix="needle", haystack_dir=None, haystack_
     hdr['NANGLE'] = (angle, 'Needle rotation angle in degrees')
 
     save_needles(haystack_clean, needle_noisy, hdr, y_idx, x_idx, needle_size, out_path, filename_prefix)
+    return region_ok
 
 
 if __name__ == "__main__":
