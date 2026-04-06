@@ -50,7 +50,7 @@ def main(pair_dir, plot=False):
     cat_candidate,    _ = detect_centroids(img_candidate)
     cat_detranslated, _ = detect_centroids(img_detranslated)
 
-    # Save centroids to CSV — one file per image. The row index in each CSV
+    # Save centroids to CSV, one file per image. The row index in each CSV
     # does NOT yet correspond between the two files; that matching happens
     # in match_centroids.py.
     for label, cat, filename in [

@@ -9,7 +9,7 @@ RANDOM_SEED = 25
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 10    # total haystack/needle pairs to generate
+NUM_PAIRS  = 100   # total haystack/needle pairs to generate
 NUM_CORES  = 16    # parallel worker processes
 
 
@@ -17,7 +17,7 @@ NUM_CORES  = 16    # parallel worker processes
 HAYSTACK_SIZE    = 1500  # square image size (px)
 HAYSTACK_NOISE   = 0.1   # Gaussian noise sigma
 GALAXY_DENSITY   = 30    # blobs per 1,000,000 pixels
-GALAXY_SIZE_Y    = (2, 10)   # Gaussian sigma range along major axis (px)
+GALAXY_SIZE_Y    = (2, 10)   # Gaussian sigma range along major axis (px)   
 GALAXY_SIZE_X    = (1, 5)   # Gaussian sigma range along minor axis (px)
 
 
@@ -39,8 +39,8 @@ CENTRAL_REGION_SIZE   = 50   # inner square (px) checked for central galaxies
 # Each needle's CRPIX is offset by a random draw from U(-WCS_ERROR_MAX, +WCS_ERROR_MAX)
 # independently on each axis, simulating an imprecise initial astrometric solution.
 # Similarly for NEEDLE_ANGLE_MAX, but for rotation instead of translation.
-WCS_ERROR_MAX    = 15    # pixels
-NEEDLE_ANGLE_MAX = 0.8   # max rotation in degrees — needle drawn from U(-MAX, +MAX)
+WCS_ERROR_MAX    = 15    # max CRPIX error in pixels, drawn from U(-WCS_ERROR_MAX, +WCS_ERROR_MAX)
+NEEDLE_ANGLE_MAX = 1.0   # max rotation in degrees, needle drawn from U(-MAX, +MAX)
 
 
 # ── Template matching ─────────────────────────────────────────────────────────
@@ -49,7 +49,7 @@ SAVE_CORRELATION_MAP = True  # save PNG of correlation map per pair
 
 
 # ── Pipeline control ──────────────────────────────────────────────────────────
-TRANSLATION_PIPELINE_PAIRS = 10    # pairs to run through correction pipeline (0 = all)
+TRANSLATION_PIPELINE_PAIRS = 100   # pairs to run through correction pipeline (0 = all)
 SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 
 

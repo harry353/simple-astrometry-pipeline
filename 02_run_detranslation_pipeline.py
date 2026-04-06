@@ -5,6 +5,7 @@ DETRANSLATION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "de
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DETRANSLATION_DIR)
 
+import time
 import constants
 import importlib
 apply_matched_filtering     = importlib.import_module("01_apply_matched_filtering")
@@ -24,24 +25,29 @@ def get_pair_dirs():
     return dirs if n == 0 else dirs[:n]
 
 
+def process_pair(pair_name):
+    pair_num      = pair_name.split("_")[1]
+    pair_dir      = os.path.join(DATASET_DIR, pair_name)
+    haystack_path = os.path.join(pair_dir, f"haystack_{pair_num}.fits")
+    needle_path   = os.path.join(pair_dir, f"needle_{pair_num}.fits")
+
+    shift_x, shift_y = apply_matched_filtering.main(haystack_path, needle_path)
+    export_candidate_needle.main(haystack_path, needle_path, shift_x, shift_y)
+    correct_needle_wcs.main(haystack_path, needle_path, shift_x, shift_y)
+    return pair_num
+
+
 def main():
     pair_dirs = get_pair_dirs()
     print(f"Running detranslation pipeline on {len(pair_dirs)} pair(s)...\n")
 
-    for pair_name in pair_dirs:
-        pair_num      = pair_name.split("_")[1]
-        pair_dir      = os.path.join(DATASET_DIR, pair_name)
-        haystack_path = os.path.join(pair_dir, f"haystack_{pair_num}.fits")
-        needle_path   = os.path.join(pair_dir, f"needle_{pair_num}.fits")
+    t_start = time.perf_counter()
+    for i, pair_name in enumerate(pair_dirs, 1):
+        pair_num = process_pair(pair_name)
+        print(f"Completed pair {pair_num} ({i}/{len(pair_dirs)})")
+    total = time.perf_counter() - t_start
 
-        print(f"{'='*60}")
-        print(f"  Pair {pair_num}")
-        print(f"{'='*60}")
-
-        shift_x, shift_y = apply_matched_filtering.main(haystack_path, needle_path)
-        export_candidate_needle.main(haystack_path, needle_path, shift_x, shift_y)
-        correct_needle_wcs.main(haystack_path, needle_path, shift_x, shift_y)
-        print()
+    print(f"\nTotal time: {total:.2f}s | Average per pair: {total / len(pair_dirs):.2f}s")
 
     records = print_detranslation_statistics.collect_statistics()
     print_detranslation_statistics.print_statistics(records)

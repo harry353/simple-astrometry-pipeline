@@ -5,6 +5,7 @@ DEROTATION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "derot
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEROTATION_DIR)
 
+import time
 import constants
 import importlib
 detect_centroids            = importlib.import_module("01_detect_centroids")
@@ -30,6 +31,7 @@ def main():
     pair_dirs = get_pair_dirs()
     print(f"Running derotation pipeline on {len(pair_dirs)} pair(s)...\n")
 
+    t_start = time.perf_counter()
     for pair_name in pair_dirs:
         pair_dir = os.path.join(DATASET_DIR, pair_name)
         pair_num = pair_name.split("_")[1]
@@ -40,10 +42,15 @@ def main():
 
         detect_centroids.main(pair_dir=pair_dir)
         match_centroids.main(pair_dir=pair_dir)
-        build_triangles.main(pair_dir=pair_dir)
+        if not build_triangles.main(pair_dir=pair_dir):
+            print(f"Skipping solve/apply for pair {pair_num} (insufficient matched points).")
+            continue
         voted_angle, refined_angle = solve_rotation.main(pair_dir=pair_dir)
         apply_derotation.main(pair_dir=pair_dir, voted_angle=voted_angle)
         print()
+    total = time.perf_counter() - t_start
+
+    print(f"Total time: {total:.2f}s | Average per pair: {total / len(pair_dirs):.2f}s\n")
 
     records = print_derotation_statistics.collect_statistics()
     print_derotation_statistics.print_statistics(records)
