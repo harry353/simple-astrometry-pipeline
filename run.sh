@@ -119,11 +119,14 @@ for attr, env in [
         else:
             setattr(datagen, attr, type(orig)(val))
 
-# Run the requested script
+# Run the requested script.
+# sys.modules['__main__'] must be set BEFORE exec so that ProcessPoolExecutor
+# workers (which fork the parent) can unpickle functions defined in the script.
 script = sys.argv[1]
 spec2 = importlib.util.spec_from_file_location('__main__', script)
 m = importlib.util.module_from_spec(spec2)
 m.__name__ = '__main__'
+sys.modules['__main__'] = m
 spec2.loader.exec_module(m)
 " "$1"
 }

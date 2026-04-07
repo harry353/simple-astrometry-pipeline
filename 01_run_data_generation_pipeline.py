@@ -42,7 +42,7 @@ def timed(func):
         start = time.time()
         result = func(*args, **kwargs)
         elapsed = time.time() - start
-        num_pairs = kwargs.get('num_pairs', args[0] if args else 1)
+        num_pairs = kwargs.get('num_pairs', args[0] if args else constants.NUM_PAIRS)
         print(f"\n=== Dataset generation complete! ===")
         print(f"Total time: {elapsed:.1f}s ({elapsed/num_pairs:.2f}s per pair)")
         print(f"Needles that failed minimum galaxy content check: {result}/{num_pairs} "
@@ -138,6 +138,7 @@ def main(num_pairs=constants.NUM_PAIRS, root_dir=DATA_GENERATION_DATASET, save_c
         root_dir=root_dir,
         output_path=os.path.join(DATA_GENERATION_DIR, "diagnostics.png")
     )
+    return n_failed
 
 
 if __name__ == "__main__":
