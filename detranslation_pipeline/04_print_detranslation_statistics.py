@@ -1,10 +1,12 @@
 import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
+import constants_astrometry
 
 DATASET_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset")
 
@@ -16,6 +18,9 @@ def collect_statistics():
         d for d in os.listdir(DATASET_DIR)
         if d.startswith("pair_") and os.path.isdir(os.path.join(DATASET_DIR, d))
     )
+    n = constants_astrometry.TRANSLATION_PIPELINE_PAIRS
+    if n != 0:
+        pair_dirs = pair_dirs[:n]
 
     for pair_name in pair_dirs:
         pair_num = pair_name.split("_")[1]

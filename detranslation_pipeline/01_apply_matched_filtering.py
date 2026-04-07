@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from scipy.signal import wiener
-import constants
+import constants_astrometry as constants
 from utils import load_fits, print_localisation_accuracy, save_correlation_map, match_template_subpixel
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", "pair_0001")

@@ -7,7 +7,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 from scipy.ndimage import rotate, zoom, maximum_filter, gaussian_filter
 import matplotlib.pyplot as plt
-import constants
+import constants_datagen as constants
 
 
 def process_needle(needle_img, modifications, output_size=300):
@@ -66,7 +66,7 @@ def load_haystack(haystack_dir, haystack_prefix):
         print(f"Loaded {h_clean_path} from disk")
         return haystack_clean, header_haystack
     except FileNotFoundError as e:
-        print(f"Error: {e}. Run create_haystack.py first.")
+        print(f"Error: {e}. Run 01_create_haystack_galsim.py or 01b_create_haystack_gaussian.py first.")
         return None, None
 
 

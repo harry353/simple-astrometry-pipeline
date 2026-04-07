@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DETRANSLATION_DIR)
 
 import time
-import constants
+import constants_astrometry as constants
 import importlib
 apply_matched_filtering     = importlib.import_module("01_apply_matched_filtering")
 export_candidate_needle     = importlib.import_module("02_export_candidate_needle")

@@ -1,19 +1,39 @@
 import sys
 import os
 import shutil
+import importlib
 
-DATA_GENERATION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation")
+_SCRIPT_DIR        = os.path.dirname(os.path.abspath(__file__))
+DATA_GENERATION_DIR = os.path.join(_SCRIPT_DIR, "data_generation")
 sys.path.insert(0, DATA_GENERATION_DIR)
 
 import random
 import time
 import gc
 import functools
-import constants
-import create_haystack
-import create_needle
-import create_data_generation_diagnostics
+import constants_datagen as constants
+create_haystack_gaussian      = importlib.import_module("01b_create_haystack_gaussian")
+create_needle                 = importlib.import_module("03_create_needle")
+create_data_generation_diagnostics = importlib.import_module("04_create_data_generation_diagnostics")
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+# Detect GalSim availability and respect the USE_GALSIM constant
+try:
+    import galsim as _galsim          # noqa: F401
+    _GALSIM_AVAILABLE = True
+except ImportError:
+    _GALSIM_AVAILABLE = False
+
+_USE_GALSIM = getattr(constants, 'USE_GALSIM', False) and _GALSIM_AVAILABLE
+
+if _USE_GALSIM:
+    create_haystack_galsim = importlib.import_module("01_create_haystack_galsim")
+    print("GalSim detected — using GalSim for haystack generation.")
+else:
+    if getattr(constants, 'USE_GALSIM', False) and not _GALSIM_AVAILABLE:
+        print("USE_GALSIM=True but GalSim is not installed — falling back to Gaussian-blob generator.")
+    else:
+        print("Using Gaussian-blob generator for haystacks.")
 
 
 def timed(func):
@@ -45,9 +65,17 @@ def generate_single_pair(i, root_dir, save_clean):
 
     # 1. Create Haystack
     haystack_prefix = f"haystack_{pair_name}"
-    h_clean, h_header = create_haystack.main(output_dir=pair_dir,
-                                             filename_prefix=haystack_prefix,
-                                             save_clean=save_clean)
+    if _USE_GALSIM:
+        h_clean, h_header = create_haystack_galsim.generate_haystack(
+            seed=pair_seed,
+            output_dir=pair_dir,
+            filename_prefix=haystack_prefix,
+            save_clean=save_clean,
+        )
+    else:
+        h_clean, h_header = create_haystack_gaussian.main(output_dir=pair_dir,
+                                                          filename_prefix=haystack_prefix,
+                                                          save_clean=save_clean)
 
     # 2. Create Needle
     needle_prefix = f"needle_{pair_name}"
@@ -97,7 +125,6 @@ def run_parallel_generation(num_pairs, root_dir, save_clean, num_cores):
     return n_failed
 
 
-DATA_GENERATION_DIR     = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation")
 DATA_GENERATION_DATASET = os.path.join(DATA_GENERATION_DIR, "dataset")
 
 

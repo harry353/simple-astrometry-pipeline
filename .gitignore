@@ -4,3 +4,4 @@
 *.csv
 .vscode/
 __pycache__/
+test_jax_gpu.py

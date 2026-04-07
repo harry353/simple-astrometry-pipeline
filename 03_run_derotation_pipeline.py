@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, DEROTATION_DIR)
 
 import time
-import constants
+import constants_astrometry as constants
 import importlib
 detect_centroids            = importlib.import_module("01_detect_centroids")
 match_centroids             = importlib.import_module("02_match_centroids")

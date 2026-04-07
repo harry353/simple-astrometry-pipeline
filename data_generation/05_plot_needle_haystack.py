@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from astropy.io import fits
 from astropy.wcs import WCS
-import constants
+import constants_datagen as constants
 from scipy.ndimage import maximum_filter, gaussian_filter
 
 import random

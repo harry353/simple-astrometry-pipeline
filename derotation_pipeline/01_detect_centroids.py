@@ -8,10 +8,9 @@ import pandas as pd
 from astropy.io import fits
 from astropy.stats import sigma_clipped_stats
 from photutils.segmentation import detect_sources, SourceCatalog
+import constants_astrometry
 
-PAIR_NUM = "0004"
-SIGMA    = 5    # detection threshold in units of background sigma
-NPIXELS  = 40   # minimum connected pixels to be counted as a source
+PAIR_NUM = "0001"
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
@@ -22,12 +21,16 @@ def detect_centroids(image):
 
     # Anything above median + SIGMA*std is considered a source.
     # Higher SIGMA = fewer but more confident detections.
-    threshold = median + SIGMA * std
+    threshold = median + constants_astrometry.DETECTION_SIGMA * std
 
     # Label connected regions of pixels above the threshold. Each labelled
-    # region is a candidate source. NPIXELS sets the minimum region size,
-    # filtering out noise spikes that would otherwise appear as sources.
-    segmap = detect_sources(image, threshold, npixels=NPIXELS)
+    # region is a candidate source. DETECTION_NPIXELS sets the minimum region
+    # size, filtering out noise spikes that would otherwise appear as sources.
+    segmap = detect_sources(image, threshold, npixels=constants_astrometry.DETECTION_NPIXELS)
+
+    # detect_sources returns None when no sources are found.
+    if segmap is None:
+        return None, median
 
     # Compute flux-weighted centroids for each segmented region.
     # Subtracting the median first removes the background contribution from the flux.

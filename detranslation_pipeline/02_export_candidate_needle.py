@@ -6,7 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits
 from astropy.wcs import WCS
-import constants
+import constants_astrometry as constants
+import constants_datagen
 from utils import load_fits
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", "pair_0001")
@@ -24,7 +25,7 @@ def main(haystack_path, needle_path, shift_x, shift_y):
 
     # Extract a square cutout of NEEDLE_SIZE around the detected centre.
     # This cutout is what we will compare against the needle in later stages.
-    half    = constants.NEEDLE_SIZE // 2
+    half    = constants_datagen.NEEDLE_SIZE // 2
     y0, y1  = cy - half, cy + half
     x0, x1  = cx - half, cx + half
     cutout  = haystack[y0:y1, x0:x1]
@@ -36,10 +37,10 @@ def main(haystack_path, needle_path, shift_x, shift_y):
     # cutout's new centre.
     wcs_h         = WCS(header_haystack)
     cutout_header = header_haystack.copy()
-    cutout_header['NAXIS1'] = constants.NEEDLE_SIZE
-    cutout_header['NAXIS2'] = constants.NEEDLE_SIZE
-    cutout_header['CRPIX1'] = constants.NEEDLE_SIZE / 2 + 0.5   # FITS 1-based geometric centre
-    cutout_header['CRPIX2'] = constants.NEEDLE_SIZE / 2 + 0.5
+    cutout_header['NAXIS1'] = constants_datagen.NEEDLE_SIZE
+    cutout_header['NAXIS2'] = constants_datagen.NEEDLE_SIZE
+    cutout_header['CRPIX1'] = constants_datagen.NEEDLE_SIZE / 2 + 0.5   # FITS 1-based geometric centre
+    cutout_header['CRPIX2'] = constants_datagen.NEEDLE_SIZE / 2 + 0.5
     center_ra, center_dec   = (float(v) for v in wcs_h.pixel_to_world_values(cx, cy))
     cutout_header['CRVAL1'] = center_ra    # sky coordinates of the detected needle centre
     cutout_header['CRVAL2'] = center_dec

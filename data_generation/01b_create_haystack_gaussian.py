@@ -7,7 +7,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
 import matplotlib.pyplot as plt
-import constants
+import constants_datagen as constants
 
 
 def create_galaxy_haystack(size=1500, num_blobs=None):

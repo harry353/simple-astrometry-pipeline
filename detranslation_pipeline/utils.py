@@ -8,7 +8,7 @@ from skimage.feature import match_template
 
 
 def match_template_subpixel(haystack, needle):
-    import constants
+    import constants_astrometry as constants
     r       = constants.SUBPIXEL_AREA // 2
     result  = match_template(haystack, needle, pad_input=True)
     yi, xi  = np.unravel_index(np.argmax(result), result.shape)
