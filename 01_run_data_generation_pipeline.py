@@ -28,10 +28,10 @@ _USE_GALSIM = getattr(constants, 'USE_GALSIM', False) and _GALSIM_AVAILABLE
 
 if _USE_GALSIM:
     create_haystack_galsim = importlib.import_module("01_create_haystack_galsim")
-    print("GalSim detected — using GalSim for haystack generation.")
+    print("GalSim detected; using GalSim for haystack generation.")
 else:
     if getattr(constants, 'USE_GALSIM', False) and not _GALSIM_AVAILABLE:
-        print("USE_GALSIM=True but GalSim is not installed — falling back to Gaussian-blob generator.")
+        print("USE_GALSIM=True but GalSim is not installed; falling back to Gaussian-blob generator.")
     else:
         print("Using Gaussian-blob generator for haystacks.")
 

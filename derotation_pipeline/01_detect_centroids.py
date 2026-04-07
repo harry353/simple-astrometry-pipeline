@@ -91,7 +91,7 @@ def main(pair_dir, plot=False):
                 ax.scatter(catalog.xcentroid, catalog.ycentroid,
                            s=60, facecolors='none', edgecolors='red', linewidths=1.2)
             n = len(catalog) if catalog is not None else 0
-            ax.set_title(f"{title} — pair {pair_num}  ({n} sources)")
+            ax.set_title(f"{title}: pair {pair_num}  ({n} sources)")
             ax.axis('off')
 
         plt.tight_layout()

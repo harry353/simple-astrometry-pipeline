@@ -84,7 +84,7 @@ def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "di
 
     cols = max(n, 5)
 
-    # Row 1 — haystacks with needle location marked
+    # Row 1: haystacks with needle location marked
     half = constants.NEEDLE_SIZE / 2
     for i, (haystack, _, _, needle_cx, needle_cy) in enumerate(samples):
         ax = fig.add_subplot(4, cols, i + 1)
@@ -99,21 +99,21 @@ def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "di
         ax.set_title(f"Haystack {i+1}", fontsize=9)
         ax.axis("off")
 
-    # Row 2 — noisy needles
+    # Row 2: noisy needles
     for i, (_, needle, _, _, _) in enumerate(samples):
         ax = fig.add_subplot(4, cols, cols + i + 1)
         ax.imshow(needle, cmap="viridis", origin="lower")
         ax.set_title(f"Needle {i+1} (noisy)", fontsize=9)
         ax.axis("off")
 
-    # Row 3 — ground truth needles
+    # Row 3: ground truth needles
     for i, (_, _, needle_gt, _, _) in enumerate(samples):
         ax = fig.add_subplot(4, cols, 2 * cols + i + 1)
         ax.imshow(needle_gt, cmap="viridis", origin="lower")
         ax.set_title(f"Needle {i+1} (ground truth)", fontsize=9)
         ax.axis("off")
 
-    # Row 4 — WCS error statistics + rotation histogram
+    # Row 4: WCS error statistics + rotation histogram
     offset = 3 * cols + 1
 
     ax_sc = fig.add_subplot(4, cols, offset)

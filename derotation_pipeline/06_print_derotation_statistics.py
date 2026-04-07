@@ -66,7 +66,7 @@ def print_statistics(records):
     residuals      = [r['residual']      for r in records]
 
     print(f"\n{'='*62}")
-    print(f"  Derotation statistics — {len(records)} pairs")
+    print(f"  Derotation statistics: {len(records)} pairs")
     print(f"{'='*62}")
 
     # Per-pair table

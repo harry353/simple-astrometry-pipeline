@@ -42,11 +42,11 @@ def quad_coordinate_system(sources):
     the AB vector as the x-axis, scaled so that B lies at (1, 0).
 
     Returns:
-        A, B         — pixel coords of the two anchor sources
-        C_q, D_q     — (x, y) coords of the other two sources in quad space
-        baseline_px  — pixel distance |AB|
-        idx_a, idx_b — indices into `sources` of the anchor pair
-        idx_c, idx_d — indices into `sources` of the inner pair
+        A, B         : pixel coords of the two anchor sources
+        C_q, D_q     : (x, y) coords of the other two sources in quad space
+        baseline_px  : pixel distance |AB|
+        idx_a, idx_b : indices into `sources` of the anchor pair
+        idx_c, idx_d : indices into `sources` of the inner pair
     """
     # Find the pair of sources with the greatest pixel separation
     max_dist = -1.0
@@ -60,8 +60,8 @@ def quad_coordinate_system(sources):
     A = sources[idx_a]
     B = sources[idx_b]
 
-    # u is the unit vector from A to B — this becomes the x-axis of quad space.
-    # v is u rotated 90° counterclockwise — this becomes the y-axis of quad space.
+    # u is the unit vector from A to B; this becomes the x-axis of quad space.
+    # v is u rotated 90° counterclockwise; this becomes the y-axis of quad space.
     # Together they form a right-handed orthonormal basis rooted at A, scaled so
     # that B maps exactly to (1, 0). The two anchor sources therefore always map
     # to (0, 0) and (1, 0), and the remaining pair's coordinates are the hash.
@@ -102,7 +102,7 @@ def main(haystack_path):
     print(f"Detected {n_sources} sources  ({t_detect*1e3:.1f} ms)")
 
     if n_sources < 4:
-        print("Fewer than 4 sources detected — cannot form any quads. Exiting.")
+        print("Fewer than 4 sources detected; cannot form any quads. Exiting.")
         return []
 
     # C(n, 4) quads total
@@ -135,7 +135,7 @@ def main(haystack_path):
 
     # ── Print results ──────────────────────────────────────────────────────────
     print(f"\n{'='*72}")
-    print(f"  Quad hashing — pair {PAIR_NUM}")
+    print(f"  Quad hashing: pair {PAIR_NUM}")
     print(f"{'='*72}")
 
     print(f"\n  Coordinate system")
@@ -146,7 +146,7 @@ def main(haystack_path):
     print(f"  {'y-axis':<32}  x-axis rotated 90° CCW")
     print(f"  {'Scale':<32}  1 unit = |AB| pixels")
     print(f"  {'Invariances':<32}  translation, rotation, scale")
-    print(f"  {'Hash':<32}  (Cx, Cy, Dx, Dy)  — inner source coords")
+    print(f"  {'Hash':<32}  (Cx, Cy, Dx, Dy)  - inner source coords")
 
     print(f"\n  Summary")
     print(f"  {'-'*68}")

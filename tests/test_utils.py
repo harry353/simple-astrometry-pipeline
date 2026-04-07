@@ -28,7 +28,7 @@ def _gaussian_blob(shape, cy, cx, sigma=3.0, amplitude=1.0):
 
 
 def _random_haystack(H=100, W=100, seed=42):
-    """Random uniform noise — gives each sub-region a unique fingerprint for NCC."""
+    """Random uniform noise; gives each sub-region a unique fingerprint for NCC."""
     rng = np.random.default_rng(seed)
     return rng.uniform(0, 1, (H, W)).astype(np.float64)
 
@@ -85,7 +85,7 @@ class TestPadToSize:
         img = rng.uniform(0.3, 0.7, (8, 8))
         H, W = 30, 30
         result = utils.pad_to_size(img, H, W)
-        # Corners are outside the embedded image — should equal img.mean()
+        # Corners are outside the embedded image; should equal img.mean()
         mean_val = img.mean()
         assert result[0, 0] == pytest.approx(mean_val)
         assert result[0, W - 1] == pytest.approx(mean_val)
@@ -127,7 +127,7 @@ class TestPrepareImages:
         assert n_out.shape == (H, W)
 
     def test_no_nans_or_infs(self, small_haystack, small_needle):
-        """Both outputs must be finite — no NaN or Inf values."""
+        """Both outputs must be finite; no NaN or Inf values."""
         h_out, n_out = utils.prepare_images(small_haystack, small_needle)
         assert np.all(np.isfinite(h_out)), "haystack output contains NaN or Inf"
         assert np.all(np.isfinite(n_out)), "needle output contains NaN or Inf"

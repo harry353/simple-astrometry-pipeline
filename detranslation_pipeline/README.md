@@ -20,7 +20,7 @@ offset = -b / (2a)
 
 where `a` and `b` are the quadratic and linear coefficients of the fit. This improves localisation precision from ~1 px to a fraction of a pixel.
 
-**Output:** `shift_x, shift_y` — the offset of the needle centre from the haystack centre, in pixels.
+**Output:** `shift_x, shift_y`: the offset of the needle centre from the haystack centre, in pixels.
 
 ---
 

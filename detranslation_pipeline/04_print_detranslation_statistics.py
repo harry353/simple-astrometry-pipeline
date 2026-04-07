@@ -92,7 +92,7 @@ def print_statistics(records):
     px_scale       = records[0]['px_scale']
 
     print(f"\n{'='*62}")
-    print(f"  Detranslation statistics — {len(records)} pairs")
+    print(f"  Detranslation statistics: {len(records)} pairs")
     print(f"{'='*62}")
 
     # Per-pair table: one row per processed pair showing initial error and residuals

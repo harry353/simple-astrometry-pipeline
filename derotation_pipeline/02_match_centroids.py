@@ -28,7 +28,7 @@ def main(pair_dir, plot=False):
     matches = []
     # For each source in the candidate image, find its nearest neighbour in the
     # detranslated image. Only accept the pair if the distance is within the
-    # match radius — larger separations likely indicate a false pairing caused
+    # match radius; larger separations likely indicate a false pairing caused
     # by a mis-detected source or a centroid that shifted more than expected.
     for _, row_c in df_cand.iterrows():
         dists = np.sqrt((df_det['x'] - row_c['x'])**2 + (df_det['y'] - row_c['y'])**2)

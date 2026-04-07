@@ -11,7 +11,7 @@ This pipeline corrects the rotational WCS error in the needle. It takes as input
 Galaxies are detected in both images using **image segmentation** from `photutils`. The algorithm works as follows:
 
 1. The background level and noise are estimated.
-2. A detection threshold is set at `median + 5σ` — any pixel above this is considered part of a source.
+2. A detection threshold is set at `median + 5σ`; any pixel above this is considered part of a source.
 3. Connected regions of pixels above the threshold are labelled using `detect_sources`. Regions smaller than `NPIXELS = 40` pixels are discarded to filter out noise spikes.
 4. For each labelled region, a **flux-weighted centroid** is computed using `SourceCatalog`.
 

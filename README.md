@@ -6,21 +6,21 @@ A pipeline for correcting World Coordinate System (WCS) errors in astronomical i
 
 ## Approach
 
-### 1. Detranslation — correcting the position error
+### 1. Detranslation: correcting the position error
 
 The needle is localised within the haystack using **template matching** (cross-correlation). Both images are first pre-filtered with a Wiener filter to suppress noise. The peak position is refined to sub-pixel accuracy using a parabolic fit.
 
 The detected shift tells us where the needle actually sits in the haystack. The needle's WCS is corrected by resetting its reference pixel (CRPIX) to the geometric centre and updating the reference sky coordinate (CRVAL) to the sky position of the detected centre.
 
-### 2. Derotation — correcting the rotation error
+### 2. Derotation: correcting the rotation error
 
 Once the position is corrected, the rotation correction is applied using **geometric hashing with triangles**:
 
 1. Sources (galaxies or stars) are detected in both the candidate cutout and the detranslated needle using image segmentation algorithm from `photutils`.
 2. Detected sources are matched across the two images by nearest-neighbour search within a pixel radius.
-3. Every unique combination of 3 matched sources forms a triangle. Each triangle is described by its side-length ratios and interior angles — quantities invariant to rotation.
+3. Every unique combination of 3 matched sources forms a triangle. Each triangle is described by its side-length ratios and interior angles, quantities invariant to rotation.
 4. A rotation angle is estimated per triangle by solving a linear least-squares system. The final angle is found by voting (histogram mode).
-5. The WCS CD matrix is updated to apply the correction. Pixel data is left untouched — no resampling or interpolation.
+5. The WCS CD matrix is updated to apply the correction. Pixel data is left untouched; no resampling or interpolation.
 
 ---
 
@@ -103,7 +103,7 @@ chmod +x run.sh
 
 ## Parameters
 
-### `constants_datagen.py` — data generation
+### `constants_datagen.py`: data generation
 
 | Parameter | Default | Description |
 |---|---|---|
@@ -125,7 +125,7 @@ chmod +x run.sh
 | `P_FAINT_GALAXY` | 0.1 | Cumulative probability threshold for faint galaxies |
 | `P_STAR` | 0.2 | Cumulative probability threshold for stars |
 
-### `constants_astrometry.py` — pipeline
+### `constants_astrometry.py`: pipeline
 
 | Parameter | Default | Description |
 |---|---|---|
@@ -153,4 +153,4 @@ galsim
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License; see [LICENSE](LICENSE) for details.
