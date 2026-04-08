@@ -5,7 +5,7 @@ FITS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
 # ── Reproducibility ───────────────────────────────────────────────────────────
-RANDOM_SEED = 25
+RANDOM_SEED = 41
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ NEEDLE_STRETCH_Y = 1.0   # zoom factor along y
 NEEDLE_STRETCH_X = 1.0   # zoom factor along x
 
 # Minimum galaxy content required in an accepted needle region
-MIN_GALAXIES          = 4
+MIN_GALAXIES          = 5
 MIN_CENTRAL_GALAXIES  = 1
 CENTRAL_REGION_SIZE   = 50   # inner square (px) checked for central galaxies
 
