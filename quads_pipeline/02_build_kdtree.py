@@ -13,11 +13,14 @@ PAIR_NUM = "0001"
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
 
-def build_kdtree(haystack_quads_path):
+def build_kdtree(haystack_quads_path=None, df=None, save=True):
     t_start = time.perf_counter()
 
-    df = pd.read_csv(haystack_quads_path)
-    print(f"Loaded {len(df)} haystack quads from {haystack_quads_path}")
+    if df is None:
+        df = pd.read_csv(haystack_quads_path)
+        print(f"Loaded {len(df)} haystack quads from {haystack_quads_path}")
+    else:
+        print(f"Using {len(df)} haystack quads (in-memory)")
 
     # The 4D hash space: (Cx, Cy, Dx, Dy)
     hashes = df[['Cx', 'Cy', 'Dx', 'Dy']].to_numpy()
@@ -51,14 +54,13 @@ def build_kdtree(haystack_quads_path):
     print(f"\n{'='*72}\n")
 
     # ── Save ──────────────────────────────────────────────────────────────────
-    pair_dir  = os.path.dirname(haystack_quads_path)
-    pair_num  = os.path.basename(pair_dir).split("_")[1]
-    tree_path = os.path.join(pair_dir, f"kdtree_haystack_{pair_num}.pkl")
-
-    with open(tree_path, "wb") as f:
-        pickle.dump({'tree': tree, 'df': df}, f)
-
-    print(f"Saved k-d tree → {tree_path}")
+    if save and haystack_quads_path is not None:
+        pair_dir  = os.path.dirname(haystack_quads_path)
+        pair_num  = os.path.basename(pair_dir).split("_")[1]
+        tree_path = os.path.join(pair_dir, f"kdtree_haystack_{pair_num}.pkl")
+        with open(tree_path, "wb") as f:
+            pickle.dump({'tree': tree, 'df': df}, f)
+        print(f"Saved k-d tree → {tree_path}")
 
     return tree, df
 

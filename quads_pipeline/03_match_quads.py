@@ -13,15 +13,18 @@ TOLERANCE = 0.02   # radius in 4D hash space (Cx, Cy, Dx, Dy) to accept a match
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
 
-def match_quads(needle_quads_path, haystack_tree_path):
+def match_quads(needle_quads_path=None, haystack_tree_path=None,
+                needle_df=None, tree=None, haystack_df=None, save=True):
     t_start = time.perf_counter()
 
     # ── Load inputs ───────────────────────────────────────────────────────────
-    needle_df = pd.read_csv(needle_quads_path)
-    with open(haystack_tree_path, "rb") as f:
-        payload = pickle.load(f)
-    tree        = payload['tree']
-    haystack_df = payload['df']
+    if needle_df is None:
+        needle_df = pd.read_csv(needle_quads_path)
+    if tree is None or haystack_df is None:
+        with open(haystack_tree_path, "rb") as f:
+            payload = pickle.load(f)
+        tree        = payload['tree']
+        haystack_df = payload['df']
 
     print(f"Needle quads  : {len(needle_df)}")
     print(f"Haystack quads: {len(haystack_df)}")
@@ -105,11 +108,12 @@ def match_quads(needle_quads_path, haystack_tree_path):
 
     # ── Save ──────────────────────────────────────────────────────────────────
     if rows:
-        pair_dir = os.path.dirname(needle_quads_path)
-        pair_num = os.path.basename(pair_dir).split("_")[1]
-        csv_path = os.path.join(pair_dir, f"candidates_{pair_num}.csv")
-        cdf.to_csv(csv_path, index=False)
-        print(f"Saved {n_candidates} candidates → {csv_path}")
+        if save and needle_quads_path is not None:
+            pair_dir = os.path.dirname(needle_quads_path)
+            pair_num = os.path.basename(pair_dir).split("_")[1]
+            csv_path = os.path.join(pair_dir, f"candidates_{pair_num}.csv")
+            cdf.to_csv(csv_path, index=False)
+            print(f"Saved {n_candidates} candidates → {csv_path}")
         return cdf
 
     return pd.DataFrame()

@@ -68,7 +68,14 @@ def _hash_quad(sources):
         return jnp.stack([jnp.dot(rel, u) / baseline,
                           jnp.dot(rel, v) / baseline])
 
-    return ia, ib, ic, id_, A, B, baseline, proj(sources[ic]), proj(sources[id_])
+    Cp = proj(sources[ic])
+    Dp = proj(sources[id_])
+    # Canonical ordering: ensure Cx ≤ Dx so C/D labels are consistent
+    # regardless of source detection order across images.
+    swap    = Cp[0] > Dp[0]
+    C_final = jnp.where(swap, Dp, Cp)
+    D_final = jnp.where(swap, Cp, Dp)
+    return ia, ib, ic, id_, A, B, baseline, C_final, D_final
 
 
 _hash_quads_batch = jax.jit(jax.vmap(_hash_quad))
@@ -86,7 +93,7 @@ def detect_centroids(image):
     return centroids, median
 
 
-def hash_image(fits_path, label):
+def hash_image(fits_path, label, save=True):
     """
     Detect sources in a FITS image, hash all C(n,4) quads, print a summary,
     save results to CSV, and return the quads list.
@@ -233,15 +240,16 @@ def hash_image(fits_path, label):
         'Dx':          Dxs,
         'Dy':          Dys,
     })
-    df.to_csv(csv_path, index=False)
-    print(f"Saved {n_quads} quads → {csv_path}")
+    if save:
+        df.to_csv(csv_path, index=False)
+        print(f"Saved {n_quads} quads → {csv_path}")
 
-    return quads
+    return quads, df
 
 
 def main(haystack_path, needle_path):
-    haystack_quads = hash_image(haystack_path, label="haystack")
-    needle_quads   = hash_image(needle_path,   label="needle")
+    (haystack_quads, _) = hash_image(haystack_path, label="haystack")
+    (needle_quads,   _) = hash_image(needle_path,   label="needle")
     return haystack_quads, needle_quads
 
 

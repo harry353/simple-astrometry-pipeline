@@ -5,7 +5,7 @@ FITS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
 # ── Reproducibility ───────────────────────────────────────────────────────────
-RANDOM_SEED = 25
+RANDOM_SEED = 41
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────

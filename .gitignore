@@ -2,3 +2,4 @@
 *.fits
 *.png
 *.csv
+test_jax_gpu.py
