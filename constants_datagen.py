@@ -14,7 +14,7 @@ NUM_CORES  = 8    # parallel worker processes
 
 
 # ── Data generation backend ───────────────────────────────────────────────────
-USE_GALSIM = True   # Use GalSim for haystack generation if galsim is installed;
+USE_GALSIM = False  # Use GalSim for haystack generation if galsim is installed;
                     # falls back to the simple Gaussian-blob generator otherwise.
 
 
@@ -23,8 +23,8 @@ HAYSTACK_SIZE    = 1500      # square image size (px)
 PIXEL_SCALE      = 0.2       # arcsec/pixel (used by both backends)
 HAYSTACK_NOISE   = 0.1       # Gaussian noise sigma
 GALAXY_DENSITY   = 5         # galaxies per arcmin²
-GALAXY_SIZE_Y    = (2, 10)   # Gaussian sigma range along major axis (px)
-GALAXY_SIZE_X    = (1, 5)    # Gaussian sigma range along minor axis (px)
+GALAXY_SIZE_Y    = (4, 12)   # Gaussian sigma range along major axis (px)
+GALAXY_SIZE_X    = (3, 6)    # Gaussian sigma range along minor axis (px)
 
 
 # ── Needle ────────────────────────────────────────────────────────────────────

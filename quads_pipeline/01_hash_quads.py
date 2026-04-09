@@ -260,7 +260,37 @@ def main(haystack_path, needle_path):
 
 
 if __name__ == "__main__":
-    main(
-        haystack_path=os.path.join(base, f"haystack_{PAIR_NUM}.fits"),
-        needle_path  =os.path.join(base, f"needle_{PAIR_NUM}.fits"),
-    )
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import LogNorm
+
+    haystack_path = os.path.join(base, f"haystack_{PAIR_NUM}.fits")
+    needle_path   = os.path.join(base, f"needle_{PAIR_NUM}.fits")
+
+    _, haystack_centroids = hash_image(haystack_path, label="haystack", save=False)
+    _, needle_centroids   = hash_image(needle_path,   label="needle",   save=False)
+
+    with fits.open(haystack_path) as hdul:
+        haystack_image = hdul[0].data.astype(np.float64)
+    with fits.open(needle_path) as hdul:
+        needle_image = hdul[0].data.astype(np.float64)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+
+    for ax, image, centroids, label in [
+        (axes[0], haystack_image, haystack_centroids, f"Haystack (pair {PAIR_NUM})"),
+        (axes[1], needle_image,   needle_centroids,   f"Needle (pair {PAIR_NUM})"),
+    ]:
+        vmin = np.percentile(image[image > 0], 1) if np.any(image > 0) else 1e-3
+        vmax = np.percentile(image, 99.9)
+        ax.imshow(image, origin="lower", cmap="viridis",
+                  norm=LogNorm(vmin=max(vmin, 1e-3), vmax=max(vmax, 1e-3)))
+        if len(centroids):
+            ax.scatter(centroids[:, 0], centroids[:, 1],
+                       s=40, facecolors="none", edgecolors="red", linewidths=0.8)
+        ax.set_title(f"{label}\n{len(centroids)} sources detected")
+        ax.set_xlabel("x (px)")
+        ax.set_ylabel("y (px)")
+
+    fig.suptitle("Detected sources", fontsize=13)
+    plt.tight_layout()
+    plt.show()

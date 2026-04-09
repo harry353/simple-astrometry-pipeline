@@ -5,7 +5,9 @@ import importlib
 
 _SCRIPT_DIR        = os.path.dirname(os.path.abspath(__file__))
 DATA_GENERATION_DIR = _SCRIPT_DIR
+_PROJECT_ROOT      = os.path.dirname(_SCRIPT_DIR)
 sys.path.insert(0, DATA_GENERATION_DIR)
+sys.path.insert(0, _PROJECT_ROOT)
 
 import random
 import time
