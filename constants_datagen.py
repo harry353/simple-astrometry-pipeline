@@ -9,7 +9,7 @@ RANDOM_SEED = 41
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 100  # total haystack/needle pairs to generate
+NUM_PAIRS  = 10   # total haystack/needle pairs to generate
 NUM_CORES  = 8    # parallel worker processes
 
 

@@ -148,17 +148,17 @@ spec2.loader.exec_module(m)
 # ── Run the requested pipeline(s) ─────────────────────────────────────────────
 run_data() {
     echo "── Data generation ──────────────────────────────────────────"
-    overrides "${SCRIPT_DIR}/01_run_data_generation_pipeline.py"
+    overrides "${SCRIPT_DIR}/data_generation/run_full_data_generation_pipeline.py"
 }
 
 run_detranslation() {
     echo "── Detranslation ────────────────────────────────────────────"
-    overrides "${SCRIPT_DIR}/02_run_detranslation_pipeline.py"
+    overrides "${SCRIPT_DIR}/detranslation_pipeline/run_full_detranslation_pipeline.py"
 }
 
 run_derotation() {
     echo "── Derotation ───────────────────────────────────────────────"
-    overrides "${SCRIPT_DIR}/03_run_derotation_pipeline.py"
+    overrides "${SCRIPT_DIR}/derotation_pipeline/run_full_derotation_pipeline.py"
 }
 
 case "$PIPELINE" in

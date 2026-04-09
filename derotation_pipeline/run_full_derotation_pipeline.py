@@ -15,7 +15,7 @@ solve_rotation              = importlib.import_module("04_solve_rotation")
 apply_derotation            = importlib.import_module("05_apply_derotation")
 print_derotation_statistics = importlib.import_module("06_print_derotation_statistics")
 
-DATASET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data_generation", "dataset")
+DATASET_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data_generation", "dataset")
 
 
 def get_pair_dirs():
