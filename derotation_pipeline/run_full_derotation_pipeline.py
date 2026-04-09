@@ -1,8 +1,9 @@
 import sys
 import os
 
-DEROTATION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "derotation_pipeline")
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+DEROTATION_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(DEROTATION_DIR)
+sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, DEROTATION_DIR)
 
 import time
