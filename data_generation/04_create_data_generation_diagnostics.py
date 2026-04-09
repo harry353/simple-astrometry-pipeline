@@ -26,7 +26,7 @@ def load_wcs_errors(root_dir):
     ex, ey, angles = [], [], []
     for _, pair_path in iter_pairs(root_dir):
         for f in os.listdir(pair_path):
-            if f.startswith("needle_") and f.endswith(".fits") and "ground_truth" not in f:
+            if f.startswith("needle_") and f.endswith(".fits"):
                 hdr = fits.getheader(os.path.join(pair_path, f))
                 if "WERR_XPX" in hdr:
                     ex.append(hdr["WERR_XPX"])
@@ -41,7 +41,7 @@ def load_samples(root_dir, n):
     for _, pair_path in iter_pairs(root_dir):
         if len(samples) >= n:
             break
-        haystack = needle = needle_gt = None
+        haystack = needle = None
         haystack_hdr = needle_hdr = None
         for f in os.listdir(pair_path):
             fp = os.path.join(pair_path, f)
@@ -49,14 +49,12 @@ def load_samples(root_dir, n):
                 with fits.open(fp) as hdul:
                     haystack = hdul[0].data.astype(float)
                     haystack_hdr = hdul[0].header
-            elif f.endswith("_ground_truth.fits"):
-                needle_gt = fits.getdata(fp).astype(float)
             elif f.startswith("needle_") and f.endswith(".fits"):
                 with fits.open(fp) as hdul:
                     needle = hdul[0].data.astype(float)
                     needle_hdr = hdul[0].header
 
-        if haystack is None or needle is None or needle_gt is None:
+        if haystack is None or needle is None:
             continue
 
         # Recover needle centre in haystack pixel coords via CRVAL + haystack WCS
@@ -69,7 +67,7 @@ def load_samples(root_dir, n):
             except Exception:
                 pass
 
-        samples.append((haystack, needle, needle_gt, needle_cx, needle_cy))
+        samples.append((haystack, needle, needle_cx, needle_cy))
     return samples
 
 
@@ -79,15 +77,15 @@ def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "di
     ex, ey, angles = load_wcs_errors(root_dir)
 
     n = len(samples)
-    fig = plt.figure(figsize=(4 * max(n, 5), 14))
+    fig = plt.figure(figsize=(4 * max(n, 5), 10))
     fig.suptitle(f"Data Generation Diagnostics  ({len(ex)} pairs)", fontsize=14, y=1.01)
 
     cols = max(n, 5)
 
     # Row 1: haystacks with needle location marked
     half = constants.NEEDLE_SIZE / 2
-    for i, (haystack, _, _, needle_cx, needle_cy) in enumerate(samples):
-        ax = fig.add_subplot(4, cols, i + 1)
+    for i, (haystack, _, needle_cx, needle_cy) in enumerate(samples):
+        ax = fig.add_subplot(3, cols, i + 1)
         ax.imshow(haystack, cmap="viridis", origin="lower")
         if needle_cx is not None:
             rect = patches.Rectangle(
@@ -100,27 +98,20 @@ def main(root_dir=DATASET_DIR, output_path=os.path.join(DATA_GENERATION_DIR, "di
         ax.axis("off")
 
     # Row 2: noisy needles
-    for i, (_, needle, _, _, _) in enumerate(samples):
-        ax = fig.add_subplot(4, cols, cols + i + 1)
+    for i, (_, needle, _, _) in enumerate(samples):
+        ax = fig.add_subplot(3, cols, cols + i + 1)
         ax.imshow(needle, cmap="viridis", origin="lower")
-        ax.set_title(f"Needle {i+1} (noisy)", fontsize=9)
+        ax.set_title(f"Needle {i+1}", fontsize=9)
         ax.axis("off")
 
-    # Row 3: ground truth needles
-    for i, (_, _, needle_gt, _, _) in enumerate(samples):
-        ax = fig.add_subplot(4, cols, 2 * cols + i + 1)
-        ax.imshow(needle_gt, cmap="viridis", origin="lower")
-        ax.set_title(f"Needle {i+1} (ground truth)", fontsize=9)
-        ax.axis("off")
+    # Row 3: WCS error statistics + rotation histogram
+    offset = 2 * cols + 1
 
-    # Row 4: WCS error statistics + rotation histogram
-    offset = 3 * cols + 1
-
-    ax_sc = fig.add_subplot(4, cols, offset)
-    ax_hx = fig.add_subplot(4, cols, offset + 1)
-    ax_hy = fig.add_subplot(4, cols, offset + 2)
-    ax_mg = fig.add_subplot(4, cols, offset + 3)
-    ax_rot = fig.add_subplot(4, cols, offset + 4)
+    ax_sc = fig.add_subplot(3, cols, offset)
+    ax_hx = fig.add_subplot(3, cols, offset + 1)
+    ax_hy = fig.add_subplot(3, cols, offset + 2)
+    ax_mg = fig.add_subplot(3, cols, offset + 3)
+    ax_rot = fig.add_subplot(3, cols, offset + 4)
 
     if len(ex) == 0:
         for ax, title in [(ax_sc, "WCS error scatter"),

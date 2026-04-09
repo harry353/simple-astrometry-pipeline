@@ -1,0 +1,16 @@
+Quads pipeline diagnostics — 2026-04-09 15:17:08
+Started         : 2026-04-09 15:15:39
+Ended           : 2026-04-09 15:17:08
+Pairs processed : 20
+Solved          : 13
+Failed          : 7
+
+pair          reason
+------------------------------------------------------------
+pair_0001      insufficient inliers for transform refit
+pair_0005      insufficient inliers for transform refit
+pair_0006      insufficient inliers for transform refit
+pair_0007      insufficient inliers for transform refit
+pair_0009      only 0/4 sources detected in needle
+pair_0010      insufficient inliers for transform refit
+pair_0013      insufficient inliers for transform refit

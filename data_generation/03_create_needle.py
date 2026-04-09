@@ -5,7 +5,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from astropy.io import fits
 from astropy.wcs import WCS
-from scipy.ndimage import rotate, zoom, maximum_filter, gaussian_filter
+from scipy.ndimage import rotate, zoom, gaussian_filter
+from skimage.feature import peak_local_max
 import matplotlib.pyplot as plt
 import constants_datagen as constants
 
@@ -49,25 +50,26 @@ def get_galaxy_centroids(patch, threshold=None, size=20, sigma=2):
         threshold = 0.1 + 2.0 * noise_level
 
     smoothed = gaussian_filter(patch, sigma=sigma)
-    local_max = maximum_filter(smoothed, size=size)
-    is_galaxy_peak = (smoothed == local_max) & (smoothed > threshold)
-
-    y_peaks, x_peaks = np.where(is_galaxy_peak)
-    return list(zip(y_peaks, x_peaks))
+    coords = peak_local_max(smoothed, min_distance=size, threshold_abs=threshold)
+    return [tuple(c) for c in coords]
 
 
 def load_haystack(haystack_dir, haystack_prefix):
-    """Loads the clean haystack and its header from disk."""
+    """Loads the clean haystack and its header from disk.
+    Falls back to the noisy file if no _clean variant exists."""
     h_clean_path = os.path.join(haystack_dir, f"{haystack_prefix}_clean.fits")
-    try:
-        with fits.open(h_clean_path) as hdul:
-            haystack_clean = hdul[0].data
-            header_haystack = hdul[0].header
-        print(f"Loaded {h_clean_path} from disk")
-        return haystack_clean, header_haystack
-    except FileNotFoundError as e:
-        print(f"Error: {e}. Run 01_create_haystack_galsim.py or 01b_create_haystack_gaussian.py first.")
-        return None, None
+    h_noisy_path = os.path.join(haystack_dir, f"{haystack_prefix}.fits")
+    for path in (h_clean_path, h_noisy_path):
+        try:
+            with fits.open(path) as hdul:
+                haystack_clean = hdul[0].data
+                header_haystack = hdul[0].header
+            print(f"Loaded {path} from disk")
+            return haystack_clean, header_haystack
+        except FileNotFoundError:
+            continue
+    print(f"Error: [Errno 2] No such file or directory: '{h_clean_path}'. Run 01_create_haystack_galsim.py or 01b_create_haystack_gaussian.py first.")
+    return None, None
 
 
 def find_needle_region(haystack_clean, needle_size, buffer_size):
@@ -103,7 +105,7 @@ def find_needle_region(haystack_clean, needle_size, buffer_size):
         x_idx = x_idx_buffer + offset
 
         inner_needle = haystack_clean[y_idx:y_idx+needle_size, x_idx:x_idx+needle_size]
-        centroids = get_galaxy_centroids(inner_needle, threshold=0.1)
+        centroids = get_galaxy_centroids(inner_needle, sigma=4)
         galaxies_found = len(centroids)
 
         central_galaxies = 0
@@ -118,7 +120,7 @@ def find_needle_region(haystack_clean, needle_size, buffer_size):
     if not region_ok:
         print(f"Warning: Could not find a matching region after {max_attempts} attempts.")
     else:
-        print(f"Found region with {galaxies_found} galaxies ({central_galaxies} central) after {attempts} attempts.")
+        print(f"Found region with {galaxies_found} galaxies ({central_galaxies} central) after {attempts} {'attempt' if attempts == 1 else 'attempts'}.")
 
     print(f"Needle Buffer: {buffer_size}x{buffer_size} at ({y_idx_buffer}, {x_idx_buffer})")
     print(f"Needle Target: {needle_size}x{needle_size} at ({y_idx}, {x_idx})")
@@ -167,22 +169,10 @@ def build_needle_header(y_idx, x_idx, needle_size, header_haystack):
     return hdr
 
 
-def save_needles(haystack_clean, needle_noisy, hdr, y_idx, x_idx, needle_size, out_path, filename_prefix):
-    """Saves the processed needle and the original clean reference to disk."""
+def save_needles(needle_noisy, hdr, out_path, filename_prefix):
+    """Saves the processed needle to disk."""
     if not os.path.exists(out_path):
         os.makedirs(out_path)
-
-    needle_original = haystack_clean[y_idx:y_idx+needle_size, x_idx:x_idx+needle_size].copy()
-    hdr_orig = hdr.copy()
-    hdr_orig['CRPIX1'] -= hdr.get('WERR_XPX', 0)
-    hdr_orig['CRPIX2'] -= hdr.get('WERR_YPX', 0)
-
-    original_path = os.path.join(out_path, f"{filename_prefix}_ground_truth.fits")
-    fits.writeto(original_path, needle_original, header=hdr_orig, overwrite=True)
-    print(f"Saved {original_path} (un-transformed reference)")
-
-    plt.imsave(os.path.join(out_path, f"{filename_prefix}_ground_truth.png"), needle_original, cmap='viridis')
-    print(f"Saved {filename_prefix}_ground_truth.png in {out_path}")
 
     output_path = os.path.join(out_path, f"{filename_prefix}.fits")
     fits.writeto(output_path, needle_noisy, header=hdr, overwrite=True)
@@ -223,9 +213,12 @@ def main(output_dir=None, filename_prefix="needle", haystack_dir=None, haystack_
     hdr = build_needle_header(y_idx, x_idx, needle_size, header_haystack)
     hdr['NANGLE'] = (angle, 'Needle rotation angle in degrees')
 
-    save_needles(haystack_clean, needle_noisy, hdr, y_idx, x_idx, needle_size, out_path, filename_prefix)
+    save_needles(needle_noisy, hdr, out_path, filename_prefix)
     return region_ok
 
 
 if __name__ == "__main__":
-    main()
+    _script_dir = os.path.dirname(os.path.abspath(__file__))
+    _pair_dir   = os.path.join(_script_dir, "dataset", "pair_0001")
+    main(output_dir=_pair_dir, filename_prefix="needle_0001",
+         haystack_dir=_pair_dir, haystack_prefix="haystack_0001")

@@ -12,9 +12,10 @@ import constants_datagen as constants
 
 def create_galaxy_haystack(size=1500, num_blobs=None):
     if num_blobs is None:
-        density = getattr(constants, 'GALAXY_DENSITY', 30)
-        num_blobs = int(density * (size * size) / 1_000_000)
-        print(f"Calculated {num_blobs} blobs for size {size} (Density: {density})")
+        density = constants.GALAXY_DENSITY
+        pixel_scale = constants.PIXEL_SCALE
+        num_blobs = int(round(density * (size * pixel_scale / 60) ** 2))
+        print(f"Calculated {num_blobs} blobs for size {size} (Density: {density} gal/arcmin²)")
     
     img = np.zeros((size, size), dtype=np.float32)
     np.random.seed(constants.RANDOM_SEED)

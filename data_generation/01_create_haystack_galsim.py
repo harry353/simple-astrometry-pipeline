@@ -1,9 +1,11 @@
 import numpy as np
 import os
+import sys
 import multiprocessing
 import time
 import galsim
-from constants_datagen import NOBJ, N_PIX, PIXEL_SCALE, P_FAINT_GALAXY, P_STAR
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constants_datagen import HAYSTACK_SIZE, GALAXY_DENSITY, PIXEL_SCALE, P_FAINT_GALAXY, P_STAR
 import galsim.roman as roman  # roman module is used only for its collecting_area and exptime
                                # constants when loading COSMOS catalogs, not for Roman-specific
                                # optics or bandpasses
@@ -21,8 +23,9 @@ import galsim.roman as roman  # roman module is used only for its collecting_are
 seed = 12345                            # Master random seed for reproducibility.
 seed1 = galsim.BaseDeviate(seed).raw()  # Convert to raw uint64 for use with GalSim RNGs
 
-n_pix = N_PIX
+n_pix       = HAYSTACK_SIZE
 pixel_scale = PIXEL_SCALE     # arcsec/pixel
+nobj        = int(round(GALAXY_DENSITY * (n_pix * pixel_scale / 60) ** 2))
 
 # Cerro Paranal 50th percentile over 2016-2023~0.72", with the
 # standard ESO "nominal" condition defined as 0.8". We use 0.8"
@@ -194,7 +197,7 @@ def generate_haystack(seed, output_dir, filename_prefix, save_clean=False):
     full_image = galsim.ImageF(n_pix, n_pix, wcs=wcs)
     image_rng  = galsim.UniformDeviate(_seed1)
 
-    for i_obj in range(NOBJ):
+    for i_obj in range(nobj):
         obj_rng  = galsim.UniformDeviate(seed + 1 + 10**6 + i_obj)
         phot_rng = galsim.UniformDeviate(_seed1 + 1 + i_obj)
 
@@ -292,10 +295,10 @@ if __name__ == '__main__':
     image_rng  = galsim.UniformDeviate(seed1)
 
     n_workers = os.cpu_count()
-    print('Drawing %d objects across %d workers.' % (NOBJ, n_workers))
+    print('Drawing %d objects across %d workers.' % (nobj, n_workers))
 
     with multiprocessing.Pool(processes=n_workers, initializer=_init_worker) as pool:
-        results = pool.map(_draw_one_object, range(NOBJ))
+        results = pool.map(_draw_one_object, range(nobj))
 
     # Accumulate stamps into the full image sequentially (no race conditions).
     for i_obj, result in enumerate(results):
