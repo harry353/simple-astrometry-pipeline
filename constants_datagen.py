@@ -5,11 +5,11 @@ FITS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 
 # ── Reproducibility ───────────────────────────────────────────────────────────
-RANDOM_SEED = 41
+RANDOM_SEED = 42
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 10   # total haystack/needle pairs to generate
+NUM_PAIRS  = 100  # total haystack/needle pairs to generate
 NUM_CORES  = 8    # parallel worker processes
 
 

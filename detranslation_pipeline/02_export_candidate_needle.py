@@ -25,12 +25,28 @@ def main(haystack_path, needle_path, shift_x, shift_y):
 
     # Extract a square cutout of NEEDLE_SIZE around the detected centre.
     # This cutout is what we will compare against the needle in later stages.
+    # Clamp to image boundaries and zero-pad if the centre is near an edge.
     half    = constants_datagen.NEEDLE_SIZE // 2
     y0, y1  = cy - half, cy + half
     x0, x1  = cx - half, cx + half
-    cutout  = haystack[y0:y1, x0:x1]
 
     print(f"Candidate needle centre: ({cx}, {cy})  cutout: x=[{x0},{x1}) y=[{y0},{y1})")
+
+    # Clamped source indices
+    src_x0 = max(x0, 0)
+    src_y0 = max(y0, 0)
+    src_x1 = min(x1, W)
+    src_y1 = min(y1, H)
+
+    # Destination indices inside the (NEEDLE_SIZE × NEEDLE_SIZE) canvas
+    dst_x0 = src_x0 - x0
+    dst_y0 = src_y0 - y0
+    dst_x1 = dst_x0 + (src_x1 - src_x0)
+    dst_y1 = dst_y0 + (src_y1 - src_y0)
+
+    cutout = np.zeros((constants_datagen.NEEDLE_SIZE, constants_datagen.NEEDLE_SIZE),
+                      dtype=haystack.dtype)
+    cutout[dst_y0:dst_y1, dst_x0:dst_x1] = haystack[src_y0:src_y1, src_x0:src_x1]
 
     # Build a WCS header for the cutout by taking the haystack WCS and updating
     # the reference pixel (CRPIX) and reference coordinate (CRVAL) to match the
@@ -53,7 +69,13 @@ def main(haystack_path, needle_path, shift_x, shift_y):
     print(f"Saved candidate FITS to {fits_out}")
 
     png_out = os.path.join(pair_dir, f"candidate_needle_{pair_num}.png")
-    plt.imsave(png_out, cutout, cmap='viridis')
+    h, w = cutout.shape
+    fig = plt.figure(figsize=(w / 100, h / 100), dpi=100)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.imshow(cutout, cmap='viridis', aspect='auto')
+    ax.axis('off')
+    fig.savefig(png_out, dpi=100)
+    plt.close(fig)
     print(f"Saved candidate PNG to {png_out}")
 
 

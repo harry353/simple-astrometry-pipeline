@@ -4,7 +4,7 @@ SAVE_CORRELATION_MAP = True  # save PNG of correlation map per pair
 
 
 # ── Pipeline control ──────────────────────────────────────────────────────────
-TRANSLATION_PIPELINE_PAIRS = 20    # pairs to run through correction pipeline (0 = all)
+TRANSLATION_PIPELINE_PAIRS = 0     # pairs to run through correction pipeline (0 = all)
 SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 
 

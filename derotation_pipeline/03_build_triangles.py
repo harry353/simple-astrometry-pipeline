@@ -48,7 +48,11 @@ def main(pair_dir, plot=False):
     matched_csv = os.path.join(pair_dir, f"centroids_matched_{pair_num}.csv")
     output_csv  = os.path.join(pair_dir, f"triangles_{pair_num}.csv")
 
-    df = pd.read_csv(matched_csv)
+    try:
+        df = pd.read_csv(matched_csv)
+    except pd.errors.EmptyDataError:
+        print("No matched centroids (empty CSV). Skipping.")
+        return False
     print(f"Loaded {len(df)} matched centroids")
 
     # Extract the (x,y) coordinates of the matched centroids in both images 
