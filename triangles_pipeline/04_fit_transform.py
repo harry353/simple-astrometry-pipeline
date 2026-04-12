@@ -3,7 +3,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
-from collections import Counter
 import numpy as np
 import pandas as pd
 from astropy.io import fits
@@ -16,46 +15,61 @@ PAIR_NUM = "0001"
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
 
+def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
+    """
+    Treat every candidate transform as a RANSAC hypothesis. Project needle
+    centroids through each transform and count inliers within INLIER_RADIUS.
+    Refit with the inliers of the winning hypothesis.
 
-def find_consensus(cdf, bin_size=None):
+    Returns (refit_dict | None, n_inliers, best_iloc).
     """
-    Vote on (tx, ty) using a 2D grid. Returns the subset of candidates
-    within ±1 bin of the peak cell and the vote count at the peak.
-    """
-    if bin_size is None:
-        bin_size = constants_astrometry.BIN_SIZE
-    tx_bins = np.round(cdf['tx'].to_numpy() / bin_size).astype(int)
-    ty_bins = np.round(cdf['ty'].to_numpy() / bin_size).astype(int)
-    votes = Counter(zip(tx_bins.tolist(), ty_bins.tolist()))
-    best_bin, best_count = votes.most_common(1)[0]
-    mask = (np.abs(tx_bins - best_bin[0]) <= 1) & (np.abs(ty_bins - best_bin[1]) <= 1)
-    return cdf[mask].copy(), int(best_count)
+    radius = constants_astrometry.INLIER_RADIUS
+    tree   = KDTree(haystack_centroids)
 
+    scales     = cdf['scale'].to_numpy().copy()
+    angles_rad = np.radians(cdf['angle_deg'].to_numpy())
+    txs        = cdf['tx'].to_numpy()
+    tys        = cdf['ty'].to_numpy()
 
-def refit_with_inliers(needle_centroids, haystack_centroids, tx, ty, a, b):
-    """
-    Given an initial transform (a, b, tx, ty), map all needle centroids to
-    haystack space, find matches within constants_astrometry.INLIER_RADIUS, and re-fit with all
-    inlier pairs.
-    """
-    R    = np.array([[a, -b], [b, a]])
-    pred = (R @ needle_centroids.T).T + np.array([tx, ty])
-    tree = KDTree(haystack_centroids)
-    dists, idxs = tree.query(pred, k=1)
-    mask      = dists < constants_astrometry.INLIER_RADIUS
-    n_inliers = int(mask.sum())
+    if constants_astrometry.FORCE_SCALE_ONE:
+        scales = np.ones_like(scales)
+
+    a = scales * np.cos(angles_rad)   # (N,)
+    b = scales * np.sin(angles_rad)   # (N,)
+
+    # (N, 2, 2) rotation-scale matrices
+    R = np.stack([np.stack([a, -b], axis=1),
+                  np.stack([b,  a], axis=1)], axis=1)
+
+    # Project all needle centroids through all N transforms → (N, M, 2)
+    pred  = np.einsum('nij,mj->nmi', R, needle_centroids)
+    pred += np.stack([txs, tys], axis=1)[:, None, :]   # broadcast translation
+
+    # Single KDTree query for all N*M projected points
+    N, M      = pred.shape[:2]
+    dists     = tree.query(pred.reshape(-1, 2), k=1)[0].reshape(N, M)
+    inlier_counts = (dists < radius).sum(axis=1)        # (N,)
+    best_iloc = int(inlier_counts.argmax())
+    n_inliers = int(inlier_counts[best_iloc])
+
     if n_inliers < 4:
-        return None, n_inliers
+        return None, n_inliers, best_iloc
+
+    # Refit with the best candidate's inliers
+    inlier_mask = dists[best_iloc] < radius
+    nn_idxs     = tree.query(pred[best_iloc], k=1)[1]
     scale, angle, tx_new, ty_new, res = fit_similarity(
-        needle_centroids[mask],
-        haystack_centroids[idxs[mask]]
+        needle_centroids[inlier_mask],
+        haystack_centroids[nn_idxs[inlier_mask]]
     )
+    if constants_astrometry.FORCE_SCALE_ONE:
+        scale = 1.0
+
     return {
         'scale': scale, 'angle_deg': angle,
         'tx': tx_new, 'ty': ty_new,
         'residual': res, 'n_inliers': n_inliers,
-    }, n_inliers
-
+    }, n_inliers, best_iloc
 
 
 def fit_transforms(candidates_path=None, needle_fits_path=None, haystack_fits_path=None,
@@ -116,17 +130,7 @@ def fit_transforms(candidates_path=None, needle_fits_path=None, haystack_fits_pa
     cdf['err_tx']    = np.abs(cdf['tx']        - gt['true_tx'])
     cdf['err_ty']    = np.abs(cdf['ty']        - gt['true_ty'])
 
-    # ── Consensus voting on (tx, ty) ──────────────────────────────────────────
-    consensus_cdf, n_votes = find_consensus(cdf)
-    cons_tx    = float(consensus_cdf['tx'].median())
-    cons_ty    = float(consensus_cdf['ty'].median())
-    cons_angle = float(consensus_cdf['angle_deg'].median())
-    cons_scale = float(consensus_cdf['scale'].median())
-
-    cdf['in_consensus'] = False
-    cdf.loc[consensus_cdf.index, 'in_consensus'] = True
-
-    # ── Inlier re-fit ─────────────────────────────────────────────────────────
+    # ── RANSAC: pick best hypothesis by inlier count, then refit ─────────────
     if needle_centroids is None or haystack_centroids is None:
         with fits.open(needle_fits_path) as f:
             needle_img = f[0].data.astype(np.float64)
@@ -143,19 +147,18 @@ def fit_transforms(candidates_path=None, needle_fits_path=None, haystack_fits_pa
             npixels=constants_astrometry.REFIT_DETECTION_NPIXELS,
         )
 
-    angle_rad = np.radians(cons_angle)
-    cons_a    = cons_scale * np.cos(angle_rad)
-    cons_b    = cons_scale * np.sin(angle_rad)
-
-    refit, n_inliers = refit_with_inliers(
-        needle_centroids, haystack_centroids,
-        cons_tx, cons_ty, cons_a, cons_b,
+    refit, n_inliers, best_iloc = ransac_best_transform(
+        needle_centroids, haystack_centroids, cdf
     )
+
+    cdf['in_consensus'] = False
+    cdf.iloc[best_iloc, cdf.columns.get_loc('in_consensus')] = True
 
     t_total = time.perf_counter() - t_start
 
     # ── Best candidate (lowest residual) ──────────────────────────────────────
     best = cdf.loc[cdf['residual'].idxmin()]
+    best_ransac = cdf.iloc[best_iloc]
 
     # ── Print results ─────────────────────────────────────────────────────────
     if constants_astrometry.VERBOSE:
@@ -204,15 +207,15 @@ def fit_transforms(candidates_path=None, needle_fits_path=None, haystack_fits_pa
         ]:
             print(f"  {label:<30}  {rec:>+10.4f}  {exp:>+10.4f}  {err:>10.4f}")
 
-        print(f"\n  Consensus  ({n_votes} peak-bin votes, {len(consensus_cdf)} candidates within ±1 bin)")
+        print(f"\n  RANSAC best hypothesis  ({n_inliers} inliers, iloc={best_iloc})")
         print(f"  {'-'*68}")
         print(f"  {'':30}  {'recovered':>10}  {'expected':>10}  {'error':>10}")
         print(f"  {'-'*68}")
         for label, rec, exp in [
-            ('scale',     cons_scale, gt['true_scale']),
-            ('angle (°)', cons_angle, gt['true_angle_deg']),
-            ('tx (px)',   cons_tx,    gt['true_tx']),
-            ('ty (px)',   cons_ty,    gt['true_ty']),
+            ('scale',     best_ransac['scale'],     gt['true_scale']),
+            ('angle (°)', best_ransac['angle_deg'], gt['true_angle_deg']),
+            ('tx (px)',   best_ransac['tx'],         gt['true_tx']),
+            ('ty (px)',   best_ransac['ty'],         gt['true_ty']),
         ]:
             err = abs(rec - exp)
             print(f"  {label:<30}  {rec:>+10.4f}  {exp:>+10.4f}  {err:>10.4f}")
