@@ -73,15 +73,15 @@ def fit_similarity(needle_pts, haystack_pts):
 
 def fit_similarity_batch(needle_pts, haystack_pts):
     """
-    Vectorized similarity fit for N quads at once.
+    Vectorized similarity fit for N point sets at once.
 
-    needle_pts, haystack_pts: shape (N, 4, 2)
+    needle_pts, haystack_pts: shape (N, K, 2)  where K >= 2
     Returns arrays of shape (N,): scales, angles_deg, txs, tys, residuals.
     """
-    N = needle_pts.shape[0]
-    A   = np.zeros((N, 8, 4))
-    rhs = np.zeros((N, 8))
-    for i in range(4):
+    N, K = needle_pts.shape[0], needle_pts.shape[1]
+    A   = np.zeros((N, 2 * K, 4))
+    rhs = np.zeros((N, 2 * K))
+    for i in range(K):
         px = needle_pts[:, i, 0]
         py = needle_pts[:, i, 1]
         qx = haystack_pts[:, i, 0]
@@ -96,7 +96,7 @@ def fit_similarity_batch(needle_pts, haystack_pts):
     a, b, tx, ty = params[:, 0], params[:, 1], params[:, 2], params[:, 3]
     scales     = np.sqrt(a**2 + b**2)
     angles_deg = np.degrees(np.arctan2(b, a))
-    pred       = np.einsum('nij,nj->ni', A.reshape(N, 8, 4), params)
+    pred       = np.einsum('nij,nj->ni', A, params)
     residuals  = np.sum((pred - rhs) ** 2, axis=1)
     return scales, angles_deg, tx, ty, residuals
 

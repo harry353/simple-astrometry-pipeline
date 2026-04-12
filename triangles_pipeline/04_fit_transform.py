@@ -80,27 +80,27 @@ def fit_transforms(candidates_path=None, needle_fits_path=None, haystack_fits_pa
     h_A = cdf[['h_A_px_x', 'h_A_px_y']].to_numpy()
     h_B = cdf[['h_B_px_x', 'h_B_px_y']].to_numpy()
 
-    n_AB  = n_B - n_A                                  # (N, 2)
-    h_AB  = h_B - h_A
+    n_AB   = n_B - n_A                                 # (N, 2)
+    h_AB   = h_B - h_A
     n_perp = np.stack([-n_AB[:, 1], n_AB[:, 0]], axis=1)
     h_perp = np.stack([-h_AB[:, 1], h_AB[:, 0]], axis=1)
 
     n_Cx = cdf['n_Cx'].to_numpy()[:, None]
     n_Cy = cdf['n_Cy'].to_numpy()[:, None]
-    n_Dx = cdf['n_Dx'].to_numpy()[:, None]
-    n_Dy = cdf['n_Dy'].to_numpy()[:, None]
     h_Cx = cdf['h_Cx'].to_numpy()[:, None]
     h_Cy = cdf['h_Cy'].to_numpy()[:, None]
-    h_Dx = cdf['h_Dx'].to_numpy()[:, None]
-    h_Dy = cdf['h_Dy'].to_numpy()[:, None]
 
-    n_C = n_A + n_Cx * n_AB + n_Cy * n_perp           # (N, 2)
-    n_D = n_A + n_Dx * n_AB + n_Dy * n_perp
-    h_C = h_A + h_Cx * h_AB + h_Cy * h_perp
-    h_D = h_A + h_Dx * h_AB + h_Dy * h_perp
+    # Reconstruct pixel coords of C from the (Cx, Cy) hash coordinates.
+    # In the triangle hash, A→(0,0) and B→(1,1) via a 45° rotation of the AB
+    # frame, so the stored coords are Cx = pu−pv, Cy = pu+pv (where pu, pv are
+    # the normalised along-AB and perpendicular components).  Inverting:
+    #   pu = (Cx + Cy) / 2,   pv = (Cy − Cx) / 2
+    # C_pixel = A + pu*(B−A) + pv*perp(B−A)
+    n_C = n_A + ((n_Cx + n_Cy) / 2) * n_AB + ((n_Cy - n_Cx) / 2) * n_perp   # (N, 2)
+    h_C = h_A + ((h_Cx + h_Cy) / 2) * h_AB + ((h_Cy - h_Cx) / 2) * h_perp
 
-    needle_pts   = np.stack([n_A, n_B, n_C, n_D], axis=1)   # (N, 4, 2)
-    haystack_pts = np.stack([h_A, h_B, h_C, h_D], axis=1)
+    needle_pts   = np.stack([n_A, n_B, n_C], axis=1)   # (N, 3, 2)
+    haystack_pts = np.stack([h_A, h_B, h_C], axis=1)
 
     scales, angles, txs, tys, residuals = fit_similarity_batch(needle_pts, haystack_pts)
 

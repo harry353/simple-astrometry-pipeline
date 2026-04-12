@@ -21,10 +21,10 @@ def generate_diagnostics(results, failures, dt_start, dt_end, total, dataset_dir
     # ── Diagnostics file ──────────────────────────────────────────────────────
     diag_path = os.path.join(
         dataset_dir,
-        f"quads_diagnostics_{dt_end.strftime('%Y%m%d_%H%M%S')}.txt",
+        f"triangles_diagnostics_{dt_end.strftime('%Y%m%d_%H%M%S')}.txt",
     )
     with open(diag_path, "w") as f:
-        f.write(f"Quads pipeline diagnostics — {dt_end.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Triangles pipeline diagnostics — {dt_end.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Started         : {dt_start.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Ended           : {dt_end.strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"Pairs processed : {len(results)}\n")
@@ -44,7 +44,7 @@ def generate_diagnostics(results, failures, dt_start, dt_end, total, dataset_dir
     unsolved = [p for p, r in results if r is None]
 
     print(f"{'='*60}")
-    print(f"  Quads pipeline summary")
+    print(f"  Triangles pipeline summary")
     print(f"{'='*60}")
     print(f"  Pairs processed   : {len(results)}")
     print(f"  Solved            : {len(solved)}")

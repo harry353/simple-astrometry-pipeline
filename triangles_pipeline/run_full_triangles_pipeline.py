@@ -1,19 +1,19 @@
 import sys
 import os
 
-QUADS_DIR  = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR   = os.path.dirname(QUADS_DIR)
+TRIANGLES_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR      = os.path.dirname(TRIANGLES_DIR)
 sys.path.insert(0, ROOT_DIR)
-sys.path.insert(0, QUADS_DIR)
+sys.path.insert(0, TRIANGLES_DIR)
 
 import time
 import datetime
 import constants_astrometry
 import importlib
-hash_quads          = importlib.import_module("01_hash_quads")
-build_kdtree        = importlib.import_module("02_build_kdtree")
-match_quads         = importlib.import_module("03_match_quads")
-fit_transform       = importlib.import_module("04_fit_transform")
+hash_triangles       = importlib.import_module("01_hash_triangles")
+build_kdtree         = importlib.import_module("02_build_kdtree")
+match_triangles      = importlib.import_module("03_match_triangles")
+fit_transform        = importlib.import_module("04_fit_transform")
 generate_diagnostics = importlib.import_module("05_generate_diagnostics")
 
 DATASET_DIR = os.path.join(ROOT_DIR, "data_generation", "dataset")
@@ -35,21 +35,21 @@ def process_pair(pair_name):
     haystack_path = os.path.join(pair_dir, f"haystack_{pair_num}.fits")
     needle_path   = os.path.join(pair_dir, f"needle_{pair_num}.fits")
 
-    # Step 1 — hash quads; skip CSV writes (haystack can be millions of rows)
-    (haystack_df, haystack_centroids) = hash_quads.hash_image(haystack_path, label="haystack", save=False)
-    (needle_df,   needle_centroids)   = hash_quads.hash_image(needle_path,   label="needle",   save=False)
+    # Step 1 — hash triangles; skip CSV writes (haystack can be millions of rows)
+    (haystack_df, haystack_centroids) = hash_triangles.hash_image(haystack_path, label="haystack", save=False)
+    (needle_df,   needle_centroids)   = hash_triangles.hash_image(needle_path,   label="needle",   save=False)
 
     if needle_df.empty:
         n = len(needle_centroids)
-        reason = f"only {n}/4 sources detected in needle"
-        print(f"  No quads formed for needle {pair_num} — skipping pair.")
+        reason = f"only {n}/3 sources detected in needle"
+        print(f"  No triangles formed for needle {pair_num} — skipping pair.")
         return pair_num, None, reason
 
     # Step 2 — build k-d tree in-memory; skip pkl write
     tree, haystack_df = build_kdtree.build_kdtree(df=haystack_df, save=False)
 
-    # Step 3 — match needle quads; pass everything in-memory
-    candidates = match_quads.match_quads(
+    # Step 3 — match needle triangles; pass everything in-memory
+    candidates = match_triangles.match_triangles(
         needle_df=needle_df, tree=tree, haystack_df=haystack_df, save=False,
     )
 
@@ -80,7 +80,7 @@ def process_pair(pair_name):
 
 def main():
     pair_dirs = get_pair_dirs()
-    print(f"Running quads pipeline on {len(pair_dirs)} pair(s)...\n")
+    print(f"Running triangles pipeline on {len(pair_dirs)} pair(s)...\n")
 
     t_start   = time.perf_counter()
     dt_start  = datetime.datetime.now()
