@@ -13,7 +13,8 @@ import importlib
 hash_triangles       = importlib.import_module("01_hash_triangles")
 build_kdtree         = importlib.import_module("02_build_kdtree")
 match_triangles      = importlib.import_module("03_match_triangles")
-fit_transform        = importlib.import_module("04_fit_transform")
+fit_candidates_mod   = importlib.import_module("04a_fit_candidates")
+fit_ransac_mod       = importlib.import_module("04b_fit_ransac")
 generate_diagnostics = importlib.import_module("05_generate_diagnostics")
 
 DATASET_DIR = os.path.join(ROOT_DIR, "data_generation", "dataset")
@@ -57,13 +58,22 @@ def process_pair(pair_name):
         print(f"  No candidates found for pair {pair_num} — skipping fit.")
         return pair_num, None, "no matches found in haystack"
 
-    # Step 4 — fit similarity transform; pass centroids to skip re-detection
-    _, gt, refit = fit_transform.fit_transforms(
+    # Step 4a — vectorized similarity fit for all candidate pairs
+    fitted_df, gt = fit_candidates_mod.fit_candidates(
         candidates_df=candidates,
+        needle_fits_path=needle_path,
+        haystack_fits_path=haystack_path,
+        save=False,
+    )
+
+    # Step 4b — RANSAC hypothesis selection + iterative inlier refit
+    _, gt, refit = fit_ransac_mod.fit_ransac(
+        candidates_df=fitted_df,
         needle_fits_path=needle_path,
         haystack_fits_path=haystack_path,
         needle_centroids=needle_centroids,
         haystack_centroids=haystack_centroids,
+        gt=gt,
         save=False,
     )
 

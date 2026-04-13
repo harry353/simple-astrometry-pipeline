@@ -9,12 +9,12 @@ RANDOM_SEED = 41
 
 
 # ── Dataset generation ────────────────────────────────────────────────────────
-NUM_PAIRS  = 10   # total haystack/needle pairs to generate
+NUM_PAIRS  = 100  # total haystack/needle pairs to generate
 NUM_CORES  = 8    # parallel worker processes
 
 
 # ── Data generation backend ───────────────────────────────────────────────────
-USE_GALSIM = False  # Use GalSim for haystack generation if galsim is installed;
+USE_GALSIM = True   # Use GalSim for haystack generation if galsim is installed;
                     # falls back to the simple Gaussian-blob generator otherwise.
 
 
