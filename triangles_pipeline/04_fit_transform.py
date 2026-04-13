@@ -17,14 +17,18 @@ base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
 
 def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
     """
-    Treat every candidate transform as a RANSAC hypothesis. Project needle
-    centroids through each transform and count inliers within INLIER_RADIUS.
-    Refit with the inliers of the winning hypothesis.
+    Two-stage inlier approach:
+      1. Score every candidate transform using the wide INLIER_SEARCH_RADIUS to
+         pick the hypothesis with the most inliers (tolerant of a rough seed).
+      2. Iteratively refit using the tight INLIER_RADIUS until the inlier set
+         stabilises or INLIER_MAX_ITERS is reached (removes noisy pairs to
+         improve angle accuracy).
 
     Returns (refit_dict | None, n_inliers, best_iloc).
     """
-    radius = constants_astrometry.INLIER_RADIUS
-    tree   = KDTree(haystack_centroids)
+    search_radius = constants_astrometry.INLIER_SEARCH_RADIUS
+    fit_radius    = constants_astrometry.INLIER_RADIUS
+    tree          = KDTree(haystack_centroids)
 
     scales     = cdf['scale'].to_numpy().copy()
     angles_rad = np.radians(cdf['angle_deg'].to_numpy())
@@ -37,39 +41,70 @@ def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
     a = scales * np.cos(angles_rad)   # (N,)
     b = scales * np.sin(angles_rad)   # (N,)
 
-    # (N, 2, 2) rotation-scale matrices
+    # ── Stage 1: score all hypotheses with the wide search radius ─────────────
     R = np.stack([np.stack([a, -b], axis=1),
-                  np.stack([b,  a], axis=1)], axis=1)
+                  np.stack([b,  a], axis=1)], axis=1)          # (N, 2, 2)
+    pred  = np.einsum('nij,mj->nmi', R, needle_centroids)      # (N, M, 2)
+    pred += np.stack([txs, tys], axis=1)[:, None, :]
 
-    # Project all needle centroids through all N transforms → (N, M, 2)
-    pred  = np.einsum('nij,mj->nmi', R, needle_centroids)
-    pred += np.stack([txs, tys], axis=1)[:, None, :]   # broadcast translation
+    N, M          = pred.shape[:2]
+    dists         = tree.query(pred.reshape(-1, 2), k=1)[0].reshape(N, M)
+    inlier_counts = (dists < search_radius).sum(axis=1)
+    best_iloc     = int(inlier_counts.argmax())
 
-    # Single KDTree query for all N*M projected points
-    N, M      = pred.shape[:2]
-    dists     = tree.query(pred.reshape(-1, 2), k=1)[0].reshape(N, M)
-    inlier_counts = (dists < radius).sum(axis=1)        # (N,)
-    best_iloc = int(inlier_counts.argmax())
-    n_inliers = int(inlier_counts[best_iloc])
+    # Seed transform from the winning hypothesis
+    cur_a  = float(a[best_iloc])
+    cur_b  = float(b[best_iloc])
+    cur_tx = float(txs[best_iloc])
+    cur_ty = float(tys[best_iloc])
 
-    if n_inliers < 4:
-        return None, n_inliers, best_iloc
+    # ── Stage 2: iterative refit with the tight fit radius ────────────────────
+    prev_inlier_set = None
+    refit           = None
+    n_iters         = 0
 
-    # Refit with the best candidate's inliers
-    inlier_mask = dists[best_iloc] < radius
-    nn_idxs     = tree.query(pred[best_iloc], k=1)[1]
-    scale, angle, tx_new, ty_new, res = fit_similarity(
-        needle_centroids[inlier_mask],
-        haystack_centroids[nn_idxs[inlier_mask]]
-    )
-    if constants_astrometry.FORCE_SCALE_ONE:
-        scale = 1.0
+    for _ in range(constants_astrometry.INLIER_MAX_ITERS):
+        R_cur    = np.array([[cur_a, -cur_b], [cur_b, cur_a]])
+        pred_cur = (R_cur @ needle_centroids.T).T + np.array([cur_tx, cur_ty])
+        dists_cur, idxs_cur = tree.query(pred_cur, k=1)
+        mask      = dists_cur < fit_radius
+        n_inliers = int(mask.sum())
 
-    return {
-        'scale': scale, 'angle_deg': angle,
-        'tx': tx_new, 'ty': ty_new,
-        'residual': res, 'n_inliers': n_inliers,
-    }, n_inliers, best_iloc
+        if n_inliers < 4:
+            break
+
+        inlier_set = frozenset(np.where(mask)[0])
+        if inlier_set == prev_inlier_set:
+            break
+        prev_inlier_set = inlier_set
+
+        weights = 1.0 / (dists_cur[mask] + 1e-6)
+        scale, angle, tx_new, ty_new, res = fit_similarity(
+            needle_centroids[mask],
+            haystack_centroids[idxs_cur[mask]],
+            weights=weights,
+        )
+        if constants_astrometry.FORCE_SCALE_ONE:
+            scale = 1.0
+
+        n_iters += 1
+        refit = {
+            'scale': scale, 'angle_deg': angle,
+            'tx': tx_new, 'ty': ty_new,
+            'residual': res, 'n_inliers': n_inliers,
+            'n_iters': n_iters,
+        }
+
+        angle_rad_new = np.radians(angle)
+        cur_a  = scale * np.cos(angle_rad_new)
+        cur_b  = scale * np.sin(angle_rad_new)
+        cur_tx = tx_new
+        cur_ty = ty_new
+
+    if refit is None:
+        return None, 0, best_iloc
+
+    return refit, refit['n_inliers'], best_iloc
 
 
 def fit_transforms(candidates_path=None, needle_fits_path=None, haystack_fits_path=None,

@@ -36,7 +36,7 @@ def detect_centroids(image, sigma, npixels):
     return centroids, median, fluxes
 
 
-def fit_similarity(needle_pts, haystack_pts):
+def fit_similarity(needle_pts, haystack_pts, weights=None):
     """
     Fit a similarity transform (rotation, uniform scale, translation) that maps
     needle pixel coords to haystack pixel coords via least squares.
@@ -50,6 +50,10 @@ def fit_similarity(needle_pts, haystack_pts):
                          [ty]
 
     where  a = s·cos θ,  b = s·sin θ.
+
+    weights: (N,) array of per-pair weights. Each pair's two rows are scaled by
+             sqrt(w_i) so tighter matches contribute more to the fit.
+             If None, all pairs are weighted equally.
     """
     n   = len(needle_pts)
     A   = np.zeros((2 * n, 4))
@@ -60,6 +64,11 @@ def fit_similarity(needle_pts, haystack_pts):
         A[2*i + 1] = [py,  px, 0, 1]
         rhs[2*i]   = qx
         rhs[2*i+1] = qy
+
+    if weights is not None:
+        w = np.sqrt(np.repeat(weights, 2))   # one weight per row
+        A   = A   * w[:, None]
+        rhs = rhs * w
 
     params, _, _, _ = np.linalg.lstsq(A, rhs, rcond=None)
     a, b, tx, ty = params

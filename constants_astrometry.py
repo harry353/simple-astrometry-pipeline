@@ -4,7 +4,7 @@ SAVE_CORRELATION_MAP = True  # save PNG of correlation map per pair
 
 
 # ── Pipeline control ──────────────────────────────────────────────────────────
-TRANSLATION_PIPELINE_PAIRS = 20    # pairs to run through correction pipeline (0 = all)
+TRANSLATION_PIPELINE_PAIRS = 100   # pairs to run through correction pipeline (0 = all)
 SAVE_NEEDLE_COMPARISON     = True  # save needle comparison PNG per pair
 
 
@@ -29,5 +29,7 @@ USE_GPU                  = True   # True = prefer GPU, fall back to CPU; False =
 
 REFIT_DETECTION_SIGMA   = 4     # detection threshold for fit_transform source detection
 REFIT_DETECTION_NPIXELS = 30    # minimum connected pixels for fit_transform source detection
-INLIER_RADIUS           = 5.0   # px: max distance to count a needle centroid as matched in RANSAC
+INLIER_SEARCH_RADIUS    = 10.0  # px: wide radius used to score RANSAC hypotheses
+INLIER_RADIUS           = 3.0   # px: tight radius used for the iterative refit
+INLIER_MAX_ITERS        = 10    # max iterations for iterative refit convergence
 FORCE_SCALE_ONE         = True  # True = force scale to 1 (no scale correction applied)

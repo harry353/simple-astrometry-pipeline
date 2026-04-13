@@ -99,7 +99,8 @@ def main():
         results.append((pair_num, refit))
         if failure_reason is not None:
             failures.append((pair_num, failure_reason))
-        print(f"  Pair {pair_num} done  ({t_pair:.2f}s)\n")
+        iters_str = f", {refit['n_iters']} iterations" if refit is not None else ""
+        print(f"  Pair {pair_num} done  ({t_pair:.2f}s{iters_str})\n")
 
     total  = time.perf_counter() - t_start
     dt_end = datetime.datetime.now()
