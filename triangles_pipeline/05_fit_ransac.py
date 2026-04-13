@@ -11,14 +11,15 @@ import importlib
 import constants_astrometry
 from utils import detect_centroids, fit_similarity, load_ground_truth
 
-fit_candidates_mod = importlib.import_module("04a_fit_candidates")
+fit_candidates_mod = importlib.import_module("04_fit_candidates")
 
 PAIR_NUM = "0001"
 
 base = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data_generation", "dataset", f"pair_{PAIR_NUM}")
 
 
-def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
+def ransac_best_transform(needle_centroids, haystack_centroids, cdf,
+                          needle_fluxes=None, haystack_fluxes=None):
     """
     Two-stage inlier approach:
       1. Score every candidate transform using the wide INLIER_SEARCH_RADIUS to
@@ -65,6 +66,7 @@ def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
     prev_inlier_set = None
     refit           = None
     n_iters         = 0
+    fit_radius      = constants_astrometry.INLIER_RADIUS
 
     for _ in range(constants_astrometry.INLIER_MAX_ITERS):
         R_cur    = np.array([[cur_a, -cur_b], [cur_b, cur_a]])
@@ -81,7 +83,13 @@ def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
             break
         prev_inlier_set = inlier_set
 
-        weights = 1.0 / (dists_cur[mask] + 1e-6)
+        if needle_fluxes is not None and haystack_fluxes is not None:
+            nf = needle_fluxes[mask]
+            hf = haystack_fluxes[idxs_cur[mask]]
+            weights = np.sqrt(nf * hf)
+            weights = weights / weights.sum()
+        else:
+            weights = 1.0 / (dists_cur[mask] + 1e-6)
         scale, angle, tx_new, ty_new, res = fit_similarity(
             needle_centroids[mask],
             haystack_centroids[idxs_cur[mask]],
@@ -112,6 +120,7 @@ def ransac_best_transform(needle_centroids, haystack_centroids, cdf):
 
 def fit_ransac(candidates_path=None, needle_fits_path=None, haystack_fits_path=None,
                candidates_df=None, needle_centroids=None, haystack_centroids=None,
+               needle_fluxes=None, haystack_fluxes=None,
                gt=None, save=True):
     """RANSAC hypothesis selection followed by iterative inlier refit.
 
@@ -137,19 +146,20 @@ def fit_ransac(candidates_path=None, needle_fits_path=None, haystack_fits_path=N
             needle_img = f[0].data.astype(np.float64)
         with fits.open(haystack_fits_path) as f:
             haystack_img = f[0].data.astype(np.float64)
-        needle_centroids, _, _   = detect_centroids(
+        needle_centroids,   _, needle_fluxes   = detect_centroids(
             needle_img,
             sigma=constants_astrometry.REFIT_DETECTION_SIGMA,
             npixels=constants_astrometry.REFIT_DETECTION_NPIXELS,
         )
-        haystack_centroids, _, _ = detect_centroids(
+        haystack_centroids, _, haystack_fluxes = detect_centroids(
             haystack_img,
             sigma=constants_astrometry.REFIT_DETECTION_SIGMA,
             npixels=constants_astrometry.REFIT_DETECTION_NPIXELS,
         )
 
     refit, n_inliers, best_iloc = ransac_best_transform(
-        needle_centroids, haystack_centroids, cdf
+        needle_centroids, haystack_centroids, cdf,
+        needle_fluxes=needle_fluxes, haystack_fluxes=haystack_fluxes,
     )
 
     cdf['in_consensus'] = False

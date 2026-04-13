@@ -4,6 +4,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import datetime
 import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 
 def generate_diagnostics(results, failures, dt_start, dt_end, total, dataset_dir):
@@ -76,3 +79,54 @@ def generate_diagnostics(results, failures, dt_start, dt_end, total, dataset_dir
     if results:
         print(f"  Avg per pair      : {total / len(results):.2f}s")
     print(f"{'='*60}\n")
+
+    # ── Residual frequency collage ────────────────────────────────────────────
+    if solved:
+        project_dir = os.path.dirname(os.path.dirname(dataset_dir))
+        plot_path   = os.path.join(
+            project_dir,
+            f"triangles_residuals_{dt_end.strftime('%Y%m%d_%H%M%S')}.png",
+        )
+
+        ARCSEC_PER_PX = 0.2
+
+        panels = [
+            ("err_scale",   "Scale error",          "Δscale",         "steelblue",   False),
+            ("err_angle",   "Angle error (°)",       "Δangle (°)",     "darkorange",  False),
+            ("err_tx",      "Translation X (px)",    "Δtx (px)",       "seagreen",    True),
+            ("err_ty",      "Translation Y (px)",    "Δty (px)",       "crimson",     True),
+        ]
+
+        fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+        fig.suptitle(
+            f"Residual error distributions — {len(solved)} solved pairs\n"
+            f"{dt_end.strftime('%Y-%m-%d %H:%M:%S')}",
+            fontsize=13,
+        )
+
+        for ax, (key, title, xlabel, color, has_arcsec) in zip(axes.flat, panels):
+            vals = np.array([r[key] for _, r in solved])
+
+            auto_edges = np.histogram_bin_edges(vals, bins="auto")
+            n_bins     = max(1, (len(auto_edges) - 1) * 2)
+            ax.hist(vals, bins=n_bins, range=(auto_edges[0], auto_edges[-1]),
+                    color=color, edgecolor="white", linewidth=0.5, alpha=0.7)
+
+            mean_val = np.mean(vals)
+            ax.axvline(mean_val, color="black", linestyle="--", linewidth=1,
+                       label=f"mean={mean_val:.4g}")
+            ax.set_title(title)
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel("count")
+            ax.legend(fontsize=8)
+
+            if has_arcsec:
+                ax_top = ax.twiny()
+                lo, hi = ax.get_xlim()
+                ax_top.set_xlim(lo * ARCSEC_PER_PX, hi * ARCSEC_PER_PX)
+                ax_top.set_xlabel('arcsec', fontsize=8)
+
+        fig.tight_layout()
+        fig.savefig(plot_path, dpi=150)
+        plt.close(fig)
+        print(f"  Residual plot   → {plot_path}")

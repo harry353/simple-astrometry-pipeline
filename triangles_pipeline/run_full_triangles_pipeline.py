@@ -13,9 +13,9 @@ import importlib
 hash_triangles       = importlib.import_module("01_hash_triangles")
 build_kdtree         = importlib.import_module("02_build_kdtree")
 match_triangles      = importlib.import_module("03_match_triangles")
-fit_candidates_mod   = importlib.import_module("04a_fit_candidates")
-fit_ransac_mod       = importlib.import_module("04b_fit_ransac")
-generate_diagnostics = importlib.import_module("05_generate_diagnostics")
+fit_candidates_mod   = importlib.import_module("04_fit_candidates")
+fit_ransac_mod       = importlib.import_module("05_fit_ransac")
+generate_diagnostics = importlib.import_module("06_generate_diagnostics")
 
 DATASET_DIR = os.path.join(ROOT_DIR, "data_generation", "dataset")
 
@@ -37,8 +37,8 @@ def process_pair(pair_name):
     needle_path   = os.path.join(pair_dir, f"needle_{pair_num}.fits")
 
     # Step 1 — hash triangles; skip CSV writes (haystack can be millions of rows)
-    (haystack_df, haystack_centroids) = hash_triangles.hash_image(haystack_path, label="haystack", save=False)
-    (needle_df,   needle_centroids)   = hash_triangles.hash_image(needle_path,   label="needle",   save=False)
+    (haystack_df, haystack_centroids, haystack_fluxes) = hash_triangles.hash_image(haystack_path, label="haystack", save=False)
+    (needle_df,   needle_centroids,   needle_fluxes)   = hash_triangles.hash_image(needle_path,   label="needle",   save=False)
 
     if needle_df.empty:
         n = len(needle_centroids)
@@ -73,6 +73,8 @@ def process_pair(pair_name):
         haystack_fits_path=haystack_path,
         needle_centroids=needle_centroids,
         haystack_centroids=haystack_centroids,
+        needle_fluxes=needle_fluxes,
+        haystack_fluxes=haystack_fluxes,
         gt=gt,
         save=False,
     )

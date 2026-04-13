@@ -112,12 +112,13 @@ def hash_image(fits_path, label, save=True):
     if max_src > 0 and n_sources_total > max_src:
         top_idx   = np.argsort(fluxes)[::-1][:max_src]
         centroids = centroids[top_idx]
+        fluxes    = fluxes[top_idx]
         print(f"Using brightest {max_src} of {n_sources_total} sources for hashing")
     n_sources = len(centroids)
 
     if n_sources < 3:
         print(f"Fewer than 3 sources detected in {label} — cannot form any triangles.")
-        return pd.DataFrame(), centroids
+        return pd.DataFrame(), centroids, fluxes
 
     n_triangles = comb(n_sources, 3)
     print(f"Building triangles: C({n_sources}, 3) = {n_triangles} triangles...")
@@ -232,12 +233,12 @@ def hash_image(fits_path, label, save=True):
         df.to_csv(csv_path, index=False)
         print(f"Saved {n_triangles} triangles → {csv_path}")
 
-    return df, centroids
+    return df, centroids, fluxes
 
 
 def main(haystack_path, needle_path):
-    (_, _) = hash_image(haystack_path, label="haystack")
-    (_, _) = hash_image(needle_path,   label="needle")
+    (_, _, _) = hash_image(haystack_path, label="haystack")
+    (_, _, _) = hash_image(needle_path,   label="needle")
 
 
 if __name__ == "__main__":
@@ -246,8 +247,8 @@ if __name__ == "__main__":
     haystack_path = os.path.join(base, f"haystack_{PAIR_NUM}.fits")
     needle_path   = os.path.join(base, f"needle_{PAIR_NUM}.fits")
 
-    _, haystack_centroids = hash_image(haystack_path, label="haystack", save=False)
-    _, needle_centroids   = hash_image(needle_path,   label="needle",   save=False)
+    _, haystack_centroids, _ = hash_image(haystack_path, label="haystack", save=False)
+    _, needle_centroids, _   = hash_image(needle_path,   label="needle",   save=False)
 
     with fits.open(haystack_path) as hdul:
         haystack_image = hdul[0].data.astype(np.float64)
