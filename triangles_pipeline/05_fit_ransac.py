@@ -83,13 +83,17 @@ def ransac_best_transform(needle_centroids, haystack_centroids, cdf,
             break
         prev_inlier_set = inlier_set
 
+        inlier_needle_pts = needle_centroids[mask]
+        centroid          = inlier_needle_pts.mean(axis=0)
+        d2                = np.sum((inlier_needle_pts - centroid) ** 2, axis=1) + 1e-6
+
         if needle_fluxes is not None and haystack_fluxes is not None:
             nf = needle_fluxes[mask]
             hf = haystack_fluxes[idxs_cur[mask]]
-            weights = np.sqrt(nf * hf)
-            weights = weights / weights.sum()
+            weights = np.sqrt(nf * hf) * d2
         else:
-            weights = 1.0 / (dists_cur[mask] + 1e-6)
+            weights = d2
+        weights = weights / weights.sum()
         scale, angle, tx_new, ty_new, res = fit_similarity(
             needle_centroids[mask],
             haystack_centroids[idxs_cur[mask]],

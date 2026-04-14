@@ -31,5 +31,5 @@ REFIT_DETECTION_SIGMA   = 3     # detection threshold for fit_transform source d
 REFIT_DETECTION_NPIXELS = 30    # minimum connected pixels for fit_transform source detection
 INLIER_SEARCH_RADIUS    = 10.0  # px: wide radius used to score RANSAC hypotheses
 INLIER_RADIUS           = 3.0   # px: tight radius used for the iterative refit
-INLIER_MAX_ITERS        = 10    # max iterations for iterative refit convergence
+INLIER_MAX_ITERS        = 1     # max iterations for iterative refit convergence
 FORCE_SCALE_ONE         = True  # True = force scale to 1 (no scale correction applied)
