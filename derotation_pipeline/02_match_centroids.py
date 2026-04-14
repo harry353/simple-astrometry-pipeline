@@ -30,21 +30,24 @@ def main(pair_dir, plot=False):
     # detranslated image. Only accept the pair if the distance is within the
     # match radius; larger separations likely indicate a false pairing caused
     # by a mis-detected source or a centroid that shifted more than expected.
-    for _, row_c in df_cand.iterrows():
-        dists = np.sqrt((df_det['x'] - row_c['x'])**2 + (df_det['y'] - row_c['y'])**2)
-        idx   = dists.idxmin()
-        if dists[idx] <= radius:
-            matches.append({
-                # Pixel positions of the matched source in each image
-                'x_candidate':    row_c['x'],
-                'y_candidate':    row_c['y'],
-                'flux_candidate': row_c['flux'],
-                'x_detranslated': df_det.loc[idx, 'x'],
-                'y_detranslated': df_det.loc[idx, 'y'],
-                'flux_detranslated': df_det.loc[idx, 'flux'],
-                # Separation between the two centroids, kept as a quality indicator
-                'dist':           dists[idx],
-            })
+    if df_det.empty:
+        print("Detranslated centroid list is empty — skipping matching.")
+    else:
+        for _, row_c in df_cand.iterrows():
+            dists = np.sqrt((df_det['x'] - row_c['x'])**2 + (df_det['y'] - row_c['y'])**2)
+            idx   = dists.idxmin()
+            if dists[idx] <= radius:
+                matches.append({
+                    # Pixel positions of the matched source in each image
+                    'x_candidate':    row_c['x'],
+                    'y_candidate':    row_c['y'],
+                    'flux_candidate': row_c['flux'],
+                    'x_detranslated': df_det.loc[idx, 'x'],
+                    'y_detranslated': df_det.loc[idx, 'y'],
+                    'flux_detranslated': df_det.loc[idx, 'flux'],
+                    # Separation between the two centroids, kept as a quality indicator
+                    'dist':           dists[idx],
+                })
 
     # Save the matched pairs to CSV. Row i in this file corresponds to the same
     # physical source in both images, so build_triangles.py can safely use the

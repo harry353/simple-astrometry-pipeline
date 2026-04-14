@@ -110,7 +110,6 @@ def main(pair_dir, plot=False):
         return False
     print(df_tri[['i','j','k','c_ratio_ab','c_ratio_bc','c_angle_A','c_angle_B','c_angle_C']].to_string(index=False))
     print(f"Saved {output_csv}")
-    return True
 
     if plot:
         fig, axes = plt.subplots(1, 2, figsize=(12, 6))
@@ -138,7 +137,7 @@ def main(pair_dir, plot=False):
         plt.tight_layout()
         plt.show()
 
-    return df_tri
+    return True
 
 
 if __name__ == "__main__":
